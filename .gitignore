@@ -1,6 +1,3 @@
 # trained models
-/classifiers/EPITOME/trained_models/reddit_ER.pth
-/classifiers/EPITOME/trained_models/reddit_EX.pth
-/classifiers/EPITOME/trained_models/reddit_IP.pth
-/classifiers/EPITOME/trained_models/sample_ER
+/classifiers/EPITOME/trained_models/
 /classifiers/empathetic_intent/best_model_sd.th
