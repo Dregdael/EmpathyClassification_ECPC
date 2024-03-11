@@ -3,11 +3,16 @@ import os, os.path
 import pandas as pd
 import torch
 from torch import cuda
-from transformers import BertForSequenceClassification, BertConfig, BertTokenizer
+from transformers import BertForSequenceClassification, BertConfig, BertTokenizer,pipeline
+
+#sentiment
+from classifiers.sentiment import sentiment_prediction as sp
+#intent
 from classifiers.empathetic_intent import intent_prediction as ip
 
 
 def get_emp_intent(dataframe_row,mdl,tokenzr,dev):
+    #dev = device
     if dataframe_row['is_response'] > 0:
         intent = dataframe_row['utterance']
         #print(dataframe_row['utterance'])
@@ -16,6 +21,19 @@ def get_emp_intent(dataframe_row,mdl,tokenzr,dev):
     else:
         intent = -1
     return intent
+
+
+def get_sentiment_label(dataframe_row,mdl,tokenzr):
+    #gets the sentiment in accordance to the label we want
+    #0 - negative, 1 - neutral, 2 - positive
+    label_val = ['negative','neutral', 'positive']
+    sentiment_lst = sp.get_sentiment(str(dataframe_row['utterance']),mdl,tokenzr)
+    index_max = max(range(len(sentiment_lst)), key=sentiment_lst.__getitem__)
+    return label_val[index_max]
+
+
+
+    
 
 def is_responde(utterance_id):
     return int((utterance_id %2 == 0))
@@ -73,7 +91,7 @@ def prepare_for_epitome(dataframe):
     dfcolumns = dataframe.columns.to_list()
     dfcolumns.remove('seeker_post')
     dfcolumns.remove('response_post')
-    print(dfcolumns)
+    #print(dfcolumns)
     epitome_df = epitome_df.drop(columns=dfcolumns)
 
     return epitome_df
@@ -82,6 +100,7 @@ def prepare_for_epitome(dataframe):
 
 def main():
     print('Start!')
+
     #setup subdirectory of data samples
     dataSubDir = './data_samples/'
     empIntSubDir = './classifiers/empathetic_intent/'
@@ -110,12 +129,12 @@ def main():
         exit(1)
 
     #get empathetic intent
-        
-    #get model and parameters
-    model,tokenizer,device = ip.loadModelTokenizerAndDevice(empIntSubDir)
-    #apply empathetic intent extraction
-    df['empathetic_intent'] = df.apply(get_emp_intent, axis=1, args = (model,tokenizer,device))
-    
+    model,tokenizer,device = ip.loadModelTokenizerAndDevice(empIntSubDir) #get model and parameters
+    df['empathetic_intent'] = df.apply(get_emp_intent, axis=1, args = (model,tokenizer,device))  #apply empathetic intent extraction
+
+    #sentiment labels
+    sent_model, sent_tokenzr = sp.loadSentimentModel() #get model and tokenizer
+    df['sentiment_label'] = df.apply(get_sentiment_label,axis = 1, args = (sent_model,sent_tokenzr)) #apply sentiment label extraction
 
 
     epitome_df = prepare_for_epitome(df)
@@ -124,7 +143,6 @@ def main():
     #Send full database to excel
     df.to_excel('EmpatheticConversations_withIntent.ods', engine="odf", index = False)
     print('Database processed successfully!')
-
 
 
 
