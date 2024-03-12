@@ -9,6 +9,9 @@ from transformers import BertForSequenceClassification, BertConfig, BertTokenize
 from classifiers.sentiment import sentiment_prediction as sp
 #intent
 from classifiers.empathetic_intent import intent_prediction as ip
+#epitome 
+#from classifiers.epitome_mechanisms import epitome_predictor as epitome
+from classifiers.epitome_mechanisms import epitome_predictor as epitome
 
 
 def get_emp_intent(dataframe_row,mdl,tokenzr,dev):
@@ -30,10 +33,6 @@ def get_sentiment_label(dataframe_row,mdl,tokenzr):
     sentiment_lst = sp.get_sentiment(str(dataframe_row['utterance']),mdl,tokenzr)
     index_max = max(range(len(sentiment_lst)), key=sentiment_lst.__getitem__)
     return label_val[index_max]
-
-
-
-    
 
 def is_responde(utterance_id):
     return int((utterance_id %2 == 0))
@@ -69,9 +68,11 @@ def fill_dataframe(dataframe):
 
 
 
-def prepare_for_epitome(dataframe):
-    dataframe['seeker_post'] = ''
-    dataframe['response_post'] = ''
+def modify_to_exchange_format(dataframe):
+    dataframe['speaker_utterance'] = ''
+    dataframe['listener_utterance'] = ''
+    dataframe['speaker_sentiment'] = ''
+    dataframe['listener_sentiment'] = ''
     conversation_ids = dataframe.conv_id.unique()
     epitome_df = pd.DataFrame()
     for i in conversation_ids:
@@ -83,17 +84,20 @@ def prepare_for_epitome(dataframe):
         #For every utterance in the index, if it is a "listener post", we get the exchange and annotate it. 
         for i in convo.index:
             if(convo.loc[i,'utterance_idx'] %2 == 0):
-                convo.loc[i, 'seeker_post'] = convo.loc[i-1, 'utterance']
-                convo.loc[i, 'response_post'] = convo.loc[i, 'utterance']
+                convo.loc[i, 'speaker_utterance'] = convo.loc[i-1, 'utterance']
+                convo.loc[i, 'listener_utterance'] = convo.loc[i, 'utterance']
+                convo.loc[i, 'speaker_sentiment'] = convo.loc[i-1, 'sentiment_label']
+                convo.loc[i, 'listener_sentiment'] = convo.loc[i, 'sentiment_label']
         epitome_df = pd.concat([epitome_df,convo])
 
     epitome_df = epitome_df[epitome_df['is_response'] != 0]
     dfcolumns = dataframe.columns.to_list()
-    dfcolumns.remove('seeker_post')
-    dfcolumns.remove('response_post')
+    dfcolumns.remove('speaker_utterance')
+    dfcolumns.remove('listener_utterance')
     #print(dfcolumns)
-    epitome_df = epitome_df.drop(columns=dfcolumns)
-
+    epitome_df = epitome_df.drop(columns=['utterance','speaker_idx','utterance_idx','is_response','sentiment_label'])
+    epitome_df = epitome_df.reset_index(drop=True)
+    #print(epitome_df.head())
     return epitome_df
 
 
@@ -111,16 +115,17 @@ def main():
     #create empty dataframe
     df = pd.DataFrame()
 
+    
     #get all datasets, process them, and join them
+    print('reading datasets....')
     for file in file_list:
         temp_df = pd.read_excel(dataSubDir+file, engine="odf")
         #set up from format given to evaluators to full dataframe
         temp_df = fill_dataframe(temp_df)
-
         #concatenate the datasets
         df = pd.concat([df,temp_df])
         df.reset_index(drop=True, inplace=True)
-    
+    print('done')
     
     #Check if there are any bad evaluations.
     if len(df[df['evaluation'].isin([1,2,3,4,5]) == False]) > 0:
@@ -128,22 +133,43 @@ def main():
         print(df[df['evaluation'].isin([1,2,3,4,5]) == False])
         exit(1)
 
+    #This is to test with a small dataframe
+    #df = df.loc[0:11]
+
     #get empathetic intent
+    print('getting intent....')
     model,tokenizer,device = ip.loadModelTokenizerAndDevice(empIntSubDir) #get model and parameters
     df['empathetic_intent'] = df.apply(get_emp_intent, axis=1, args = (model,tokenizer,device))  #apply empathetic intent extraction
+    print('done')
 
     #sentiment labels
+    print('getting sentiment....')
     sent_model, sent_tokenzr = sp.loadSentimentModel() #get model and tokenizer
     df['sentiment_label'] = df.apply(get_sentiment_label,axis = 1, args = (sent_model,sent_tokenzr)) #apply sentiment label extraction
+    print('done')
+
+    #prepare the database in exchange format
+    print('preparing database in exchange format....')
+    epitome_df = modify_to_exchange_format(df)
+    print('done')
 
 
-    epitome_df = prepare_for_epitome(df)
-    epitome_df.to_csv('EmpatheticConversations_forepitome.csv',index_label ='id')
+    #call the epitome classifier and get the epitome mechanisms: Emotional reaction (ER), Intepretation (IP), and Explorations (EX)
+    print('getting EPITOME mechanisms....')
+    epitome_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',epitome_df)
+    print('done')
+
+    #output the processed database
+    epitome_df.to_csv('EmpatheticExchanges.csv',index_label ='id')
+
+    #get number of words, for keywords
+    #df['num_o_words'] = df['utterance'].apply(lambda x: len(str(x).split()))
+    #print(df['num_o_words'].mean())
+    #print(df.head())
 
     #Send full database to excel
-    df.to_excel('EmpatheticConversations_withIntent.ods', engine="odf", index = False)
+    #df.to_excel('EmpatheticConversations_withIntent.ods', engine="odf", index = False)
     print('Database processed successfully!')
-
 
 
 if __name__ == '__main__':

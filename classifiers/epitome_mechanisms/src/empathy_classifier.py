@@ -18,7 +18,7 @@ from transformers import RobertaTokenizer
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data import TensorDataset, random_split
 
-from models.models import BiEncoderAttentionWithRationaleClassification
+from .models.models import BiEncoderAttentionWithRationaleClassification
 from transformers import AdamW, RobertaConfig
 
 import datetime
