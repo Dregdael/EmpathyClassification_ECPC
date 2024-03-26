@@ -3,4 +3,4 @@
 /classifiers/empathetic_intent/best_model_sd.pt
 /Papers/
 /classifiers/epitome_mechanisms/trained_models/*
-/Experiments/*
+/Experiments/outputs/*
