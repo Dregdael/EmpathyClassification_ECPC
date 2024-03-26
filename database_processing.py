@@ -4,6 +4,9 @@ import pandas as pd
 import torch
 from torch import cuda
 from transformers import BertForSequenceClassification, BertConfig, BertTokenizer,pipeline
+import re
+import numpy as np
+
 
 #sentiment
 from classifiers.sentiment import sentiment_prediction as sp
@@ -12,6 +15,16 @@ from classifiers.empathetic_intent import intent_prediction as ip
 #epitome 
 #from classifiers.epitome_mechanisms import epitome_predictor as epitome
 from classifiers.epitome_mechanisms import epitome_predictor as epitome
+from classifiers.nrc_vad_lexicon import lexicon_analysis as lexicon
+from sklearn.model_selection import train_test_split
+#emotion
+from classifiers.course_grained_emotion import pretrained_32emotions as em32
+
+emotion_dictionary = {0: 'afraid', 1: 'angry', 2: 'annoyed', 3: 'anticipating', 4: 'anxious', 5: 'apprehensive', 6: 'ashamed', 7: 'caring', 8: 'confident', 9: 'content', 
+ 10: 'devastated', 11: 'disappointed', 12: 'disgusted', 13: 'embarrassed', 14: 'excited', 15: 'faithful', 16: 'furious', 17: 'grateful', 18: 'guilty', 
+ 19: 'hopeful', 20: 'impressed', 21: 'jealous', 22: 'joyful', 23: 'lonely', 24: 'nostalgic', 25: 'prepared', 26: 'proud', 27: 'sad', 28: 'sentimental', 
+ 29: 'surprised', 30: 'terrified', 31: 'trusting'}
+intent_labels = ['agreeing','acknowledging','encouraging','consoling','sympathizing','suggesting','questioning','wishing','neutral']
 
 
 def get_emp_intent(dataframe_row,mdl,tokenzr,dev):
@@ -25,12 +38,51 @@ def get_emp_intent(dataframe_row,mdl,tokenzr,dev):
         intent = -1
     return intent
 
+def get_emp_intent_probabilities(dataframe_row,mdl,tokenzr,dev,utt_column):
+    #dev = device
+    if dataframe_row['is_response'] > 0:
+        intent = dataframe_row['utterance']
+        #print(dataframe_row['utterance'])
+        intent = ip.get_empathetic_intent_logits(str(dataframe_row[utt_column]),mdl,tokenzr,dev)
+        #print(dataframe_row['utterance'])
+    else:
+        intent = -1
+    return intent
 
-def get_sentiment_label(dataframe_row,mdl,tokenzr):
+def get_sentiment_probabilities(dataframe_row,mdl,tokenzr,utt_column):
+    #gets the sentiment in accordance to the label we want
+    #0 - negative, 1 - neutral, 2 - positive
+    #label_val = ['negative','neutral', 'positive']
+    sentiment_lst = sp.get_sentiment(str(dataframe_row[utt_column]),mdl,tokenzr)
+
+    #print(sentiment_lst)
+    #index_max = max(range(len(sentiment_lst)), key=sentiment_lst.__getitem__)
+    return sentiment_lst
+
+
+def get_emotion_probabilities(dataframe_row,mdl,tokenzr,utt_column):
+    emotion_lst = em32.get_emotion_32(str(dataframe_row[utt_column]),mdl,tokenzr)
+    return emotion_lst
+
+def get_emotion_label(dataframe_row,mdl,tokenzr,utt_column):
+    emotion_lst = em32.get_emotion_32(str(dataframe_row[utt_column]),mdl,tokenzr)
+    label = emotion_dictionary[np.argmax(emotion_lst)]
+    return label
+
+def get_word_len(utterance):
+    utterance = str(utterance)
+    utterance = re.sub("_comma_", ',', utterance)
+    arr = utterance.split()
+    #string2clean = re.sub("[^0-9a-zA-Z']+", ' ', string2clean)
+    return len(arr)
+
+
+def get_sentiment_label(dataframe_row,mdl,tokenzr,utt_column):
     #gets the sentiment in accordance to the label we want
     #0 - negative, 1 - neutral, 2 - positive
     label_val = ['negative','neutral', 'positive']
-    sentiment_lst = sp.get_sentiment(str(dataframe_row['utterance']),mdl,tokenzr)
+    sentiment_lst = sp.get_sentiment(str(dataframe_row[utt_column]),mdl,tokenzr)
+    #print(sentiment_lst)
     index_max = max(range(len(sentiment_lst)), key=sentiment_lst.__getitem__)
     return label_val[index_max]
 
@@ -66,13 +118,11 @@ def fill_dataframe(dataframe):
     dataframe['is_response'] = dataframe['utterance_idx'].apply(is_responde)
     return dataframe
 
-
-
 def modify_to_exchange_format(dataframe):
     dataframe['speaker_utterance'] = ''
     dataframe['listener_utterance'] = ''
-    dataframe['speaker_sentiment'] = ''
-    dataframe['listener_sentiment'] = ''
+    #dataframe['speaker_sentiment'] = ''
+    #dataframe['listener_sentiment'] = ''
     conversation_ids = dataframe.conv_id.unique()
     epitome_df = pd.DataFrame()
     for i in conversation_ids:
@@ -86,8 +136,8 @@ def modify_to_exchange_format(dataframe):
             if(convo.loc[i,'utterance_idx'] %2 == 0):
                 convo.loc[i, 'speaker_utterance'] = convo.loc[i-1, 'utterance']
                 convo.loc[i, 'listener_utterance'] = convo.loc[i, 'utterance']
-                convo.loc[i, 'speaker_sentiment'] = convo.loc[i-1, 'sentiment_label']
-                convo.loc[i, 'listener_sentiment'] = convo.loc[i, 'sentiment_label']
+                #convo.loc[i, 'speaker_sentiment'] = convo.loc[i-1, 'sentiment_label']
+                #convo.loc[i, 'listener_sentiment'] = convo.loc[i, 'sentiment_label']
         epitome_df = pd.concat([epitome_df,convo])
 
     epitome_df = epitome_df[epitome_df['is_response'] != 0]
@@ -95,18 +145,35 @@ def modify_to_exchange_format(dataframe):
     dfcolumns.remove('speaker_utterance')
     dfcolumns.remove('listener_utterance')
     #print(dfcolumns)
-    epitome_df = epitome_df.drop(columns=['utterance','speaker_idx','utterance_idx','is_response','sentiment_label'])
+    #epitome_df = epitome_df.drop(columns=['utterance','speaker_idx','utterance_idx','is_response','sentiment_label'])
+    epitome_df = epitome_df.drop(columns=['utterance','speaker_idx','utterance_idx','is_response'])
     epitome_df = epitome_df.reset_index(drop=True)
     #print(epitome_df.head())
     return epitome_df
 
 
+def get_VAD_values_for_both(dataframe):
+    #setup lexicon utilities
+    lexicon_df,wnl,stp_wrds = lexicon.setup_lexicon('classifiers/nrc_vad_lexicon/BipolarScale/NRC-VAD-Lexicon.txt')
+    dataframe['vad_speaker'] = dataframe['speaker_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds)) 
+    dataframe['vad_listener'] = dataframe['listener_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds)) 
+    dataframe[['valence_speaker','arousal_speaker','dominance_speaker']] = pd.DataFrame(dataframe.vad_speaker.tolist(),index = dataframe.index)
+    dataframe[['valence_listener','arousal_listener','dominance_listener']] = pd.DataFrame(dataframe.vad_listener.tolist(),index = dataframe.index)
+    dataframe = dataframe.drop(columns = ['vad_speaker','vad_listener'])
+    #print(vad)
+    return dataframe
+
 
 def main():
     print('Start!')
 
+    database_to_process = 'data_samples'
+    #database_to_process = 'EmpatheticConversations-EC'
+
     #setup subdirectory of data samples
-    dataSubDir = './data_samples/'
+    dataSubDir = './'+database_to_process+'/'
+    
+
     empIntSubDir = './classifiers/empathetic_intent/'
 
     #get all files
@@ -115,61 +182,123 @@ def main():
     #create empty dataframe
     df = pd.DataFrame()
 
-    
+    if database_to_process == 'data_samples':    
     #get all datasets, process them, and join them
-    print('reading datasets....')
-    for file in file_list:
-        temp_df = pd.read_excel(dataSubDir+file, engine="odf")
-        #set up from format given to evaluators to full dataframe
-        temp_df = fill_dataframe(temp_df)
-        #concatenate the datasets
+        print('reading datasets....')
+        for file in file_list:
+            temp_df = pd.read_excel(dataSubDir+file, engine="odf")
+            #set up from format given to evaluators to full dataframe
+            temp_df = fill_dataframe(temp_df)
+            #concatenate the datasets
+            df = pd.concat([df,temp_df])
+            df.reset_index(drop=True, inplace=True)
+        print('done')
+        #Check if there are any bad evaluations.
+        if len(df[df['evaluation'].isin([1,2,3,4,5]) == False]) > 0:
+            print('Error: Database contains bad evaluations, manually check the following conversations')
+            print(df[df['evaluation'].isin([1,2,3,4,5]) == False])
+            exit(1)
+        df = df.rename(columns={"evaluation": "empathy"})
+    else:
+        
+        temp_df = pd.read_csv(dataSubDir+'EmpatheticConversations.csv')
+        #print(temp_df.head())
         df = pd.concat([df,temp_df])
-        df.reset_index(drop=True, inplace=True)
-    print('done')
+        df['is_response'] = df['utterance_idx'].apply(is_responde)
+        df = df.drop(columns=['ut_len','Talker','Sentiment','Emotion','Taxonomy','Intent'])
+        df = df.rename(columns={"Empathy": "empathy"})
     
-    #Check if there are any bad evaluations.
-    if len(df[df['evaluation'].isin([1,2,3,4,5]) == False]) > 0:
-        print('Error: Database contains bad evaluations, manually check the following conversations')
-        print(df[df['evaluation'].isin([1,2,3,4,5]) == False])
-        exit(1)
 
+    
     #This is to test with a small dataframe
-    #df = df.loc[0:11]
+    #df = df.loc[0:5]
 
     #get empathetic intent
     print('getting intent....')
     model,tokenizer,device = ip.loadModelTokenizerAndDevice(empIntSubDir) #get model and parameters
-    df['empathetic_intent'] = df.apply(get_emp_intent, axis=1, args = (model,tokenizer,device))  #apply empathetic intent extraction
+    df['empathetic_intent'] = df.apply(get_emp_intent_probabilities, axis=1, args = (model,tokenizer,device,'utterance'))
+    #exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = df.index)
+    #exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = exchange_df.index)
+    #df['empathetic_intent'] = df.apply(get_emp_intent, axis=1, args = (model,tokenizer,device))  #apply empathetic intent extraction
+    print('done')
+
+   
+    #prepare the database in exchange format
+    print('preparing database in exchange format....')
+    exchange_df = modify_to_exchange_format(df)
     print('done')
 
     #sentiment labels
     print('getting sentiment....')
     sent_model, sent_tokenzr = sp.loadSentimentModel() #get model and tokenizer
-    df['sentiment_label'] = df.apply(get_sentiment_label,axis = 1, args = (sent_model,sent_tokenzr)) #apply sentiment label extraction
-    print('done')
-
-    #prepare the database in exchange format
-    print('preparing database in exchange format....')
-    epitome_df = modify_to_exchange_format(df)
+    exchange_df['speaker_sentiment'] = exchange_df.apply(get_sentiment_probabilities,axis = 1, args = (sent_model,sent_tokenzr,'speaker_utterance')) #apply sentiment label extraction to speaker
+    exchange_df[['s_negative','s_neutral', 's_positive']] = pd.DataFrame(exchange_df.speaker_sentiment.tolist(),index = exchange_df.index)
+    exchange_df['listener_sentiment'] = exchange_df.apply(get_sentiment_probabilities,axis = 1, args = (sent_model,sent_tokenzr,'listener_utterance')) #apply sentiment label extraction to speaker
+    exchange_df[['l_negative','l_neutral', 'l_positive']] = pd.DataFrame(exchange_df.listener_sentiment.tolist(),index = exchange_df.index)
+    exchange_df = exchange_df.drop(columns=['speaker_sentiment','listener_sentiment'])
     print('done')
 
 
     #call the epitome classifier and get the epitome mechanisms: Emotional reaction (ER), Intepretation (IP), and Explorations (EX)
     print('getting EPITOME mechanisms....')
-    epitome_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',epitome_df)
+    exchange_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',exchange_df)
     print('done')
 
-    #output the processed database
-    epitome_df.to_csv('EmpatheticExchanges.csv',index_label ='id')
+    
+    #Annotate Valence, Arousal, and Dominance for the speaker and listener utterances.
+    print('Annotating VAD values.....')
+    exchange_df = get_VAD_values_for_both(exchange_df)
+    print('done')
 
-    #get number of words, for keywords
-    #df['num_o_words'] = df['utterance'].apply(lambda x: len(str(x).split()))
-    #print(df['num_o_words'].mean())
-    #print(df.head())
+    #Get length of utterances
+    print('getting length of utterances....')
+    exchange_df['s_word_len'] = exchange_df['speaker_utterance'].apply(get_word_len) 
+    exchange_df['l_word_len'] = exchange_df['listener_utterance'].apply(get_word_len) 
+    print('done')
 
-    #Send full database to excel
-    #df.to_excel('EmpatheticConversations_withIntent.ods', engine="odf", index = False)
+ 
+    #separate intent 
+    print('separating intent....')
+    exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = exchange_df.index)
+    exchange_df = exchange_df.drop(columns=['empathetic_intent'])
+    print('done')
+    #print(exchange_df.head())
+    '''
+    #get emotion
+    print('getting emotion.....')
+    emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
+    exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
+    exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
+    #print(exchange_df)
+    print('done')
+    '''
+    
+    print('separating dataframe for classification...')
+    X = exchange_df.drop(columns=['empathy'])
+    y = exchange_df['empathy']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42,stratify=y)
+    train_df = pd.concat([X_train, y_train], axis=1)
+    test_df = pd.concat([X_test, y_test], axis=1)
+    print('done')
+    #Output database in csv format. 
+    if database_to_process == 'data_samples':  
+        #output the processed database
+        exchange_df.to_csv('./EmpatheticExchanges/EmpatheticExchanges.csv',index=False)
+        columns_to_drop = ['conv_id','prompt','speaker_utterance', 'listener_utterance','context']
+        train_df = train_df.drop(columns=columns_to_drop)
+        test_df = test_df.drop(columns=columns_to_drop)
+        train_df.to_csv('./EmpatheticExchanges/train.csv',index=False)
+        test_df.to_csv('./EmpatheticExchanges/test.csv',index=False)
+    else:
+        exchange_df.to_csv('./EmpatheticConversationsExchangeFormat/EmpatheticConversations_ex.csv',index=False)
+        #df_to_classify = exchange_df.copy()
+        columns_to_drop = ['conv_id','prompt','speaker_utterance', 'listener_utterance','context']
+        train_df = train_df.drop(columns=columns_to_drop)
+        test_df = test_df.drop(columns=columns_to_drop)
+        train_df.to_csv('./EmpatheticConversationsExchangeFormat/train.csv',index=False)
+        test_df.to_csv('./EmpatheticConversationsExchangeFormat/test.csv',index=False)
     print('Database processed successfully!')
+
 
 
 if __name__ == '__main__':
