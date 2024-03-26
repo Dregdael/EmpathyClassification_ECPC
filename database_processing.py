@@ -167,8 +167,8 @@ def get_VAD_values_for_both(dataframe):
 def main():
     print('Start!')
 
-    database_to_process = 'data_samples'
-    #database_to_process = 'EmpatheticConversations-EC'
+    #database_to_process = 'data_samples'
+    database_to_process = 'EmpatheticConversations-EC'
 
     #setup subdirectory of data samples
     dataSubDir = './'+database_to_process+'/'

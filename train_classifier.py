@@ -18,8 +18,8 @@ from PBC4cip.core.Helpers import get_col_dist, get_idx_val
 
 def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    #database_dir = '/EmpatheticConversationsExchangeFormat/'
-    database_dir = '/EmpatheticExchanges/'
+    database_dir = '/EmpatheticConversationsExchangeFormat/'
+    #database_dir = '/EmpatheticExchanges/'
     trainFile = current_dir + database_dir + 'train.csv'
 
 

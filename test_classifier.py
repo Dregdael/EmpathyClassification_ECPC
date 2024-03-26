@@ -43,7 +43,7 @@ def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     database_dir_ec = '/EmpatheticConversationsExchangeFormat/'
     database_dir_ex = '/EmpatheticExchanges/'
-    current_db = database_dir_ex
+    current_db = database_dir_ec
 
     #get test file to compare
     testFile = current_dir + current_db + 'test.csv'
