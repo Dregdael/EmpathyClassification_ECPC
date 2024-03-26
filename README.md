@@ -12,8 +12,8 @@ To use the code in this repository it is necessary to:
 2. Train the EPITOME classifier by running 'classifiers/EPITOME/train.py'
 3. Select the database to use in database_processing.py 
 4. Process the database by running database_processing.py
-5. Train the model by running train.py
-6. Test the model by running test.py
+5. Train the model by running train_classifier.py
+6. Test the model by running test_classifier.py
 7. Get the results, patterns, model, and predictions from the database processed folder and move them to the experiments folder to a new folder called 'outputs' 
 
 To do:
