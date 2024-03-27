@@ -16,15 +16,14 @@ from PBC4cip.core.Helpers import get_col_dist, get_idx_val
 
 
 
-def train(database_dir,experiment_number):
+def train(experiment_number,data_train):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    trainFile = current_dir + database_dir + 'train.csv'
 
 
     pbc = PBC4cip(tree_count = 100,filtering=False, multivariate = False) # create classifier with custom tree count
  
  
-    data_train = pd.read_csv(trainFile)
+    #data_train = pd.read_csv(trainFile)
     data_train["empathy"] = data_train["empathy"].astype('int')
     data_train["empathy"] = data_train["empathy"].astype('string')
     #data_train["speaker_emotion"] = data_train["speaker_emotion"].astype('category')
@@ -40,10 +39,6 @@ def train(database_dir,experiment_number):
     patterns = pbc.fit(x_train,y_train)
     filepath = current_dir + '/Experiments/outputs/Experiment ' + str(experiment_number) + '/'
     filename = 'trained_pbc4cip.sav'
-    if os.path.exists(filepath):
-        print('Path found')
-    else:
-        os.mkdir(filepath)
 
     pickle.dump(pbc, open(filepath + filename, 'wb'))
 

@@ -35,17 +35,14 @@ def score(predicted, y):
 
 
 
-
-
-def test(database_dir,experiment_number):
+def test(experiment_number,data_test,model_path):
 
     #setup of directories 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    current_db = database_dir
 
     #get test file to compare
-    testFile = current_dir + current_db + 'test.csv'
-    data_test = pd.read_csv(testFile)
+    #testFile = current_dir + current_db + 'test.csv'
+    #data_test = pd.read_csv(testFile)
     data_test["empathy"] = data_test["empathy"].astype('int')
     data_test["empathy"] = data_test["empathy"].astype('string')
 
@@ -54,8 +51,7 @@ def test(database_dir,experiment_number):
     y_test = y_test.drop(columns=x_test.columns)
 
     #get model
-    filename = current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + 'trained_pbc4cip.sav'
-    pbc = pickle.load(open(filename, 'rb'))
+    pbc = pickle.load(open(model_path, 'rb'))
 
     #predict with model
     y_pred = pbc.predict(x_test)
@@ -70,7 +66,6 @@ def test(database_dir,experiment_number):
             print(f"{prediction}",file=f)
 
     #print metrics
-    print(f'Closeness Evaluation Measure: {cem.get_cem(y_pred,y_test):.2f}')
     print(f"\nConfusion Matrix:")
     print(f'row: true, column: predicted ')
     for i in range(len(confusion[0])):
@@ -86,6 +81,6 @@ def test(database_dir,experiment_number):
         for i in range(len(confusion[0])):
             for j in range(len(confusion[0])):
                print(f"{confusion[i][j]} ", end='', file=f)
-            print("")
+            print("", file=f)
         print(f"\n\nacc: {acc} , auc: {auc}, cem: {ClosenessEvaluationMeasure}", file=f)
     

@@ -51,21 +51,18 @@ def get_emp_intent_probabilities(dataframe_row,mdl,tokenzr,dev,utt_column):
     return intent
 
 def get_sentiment_probabilities(dataframe_row,mdl,tokenzr,utt_column):
-    #gets the sentiment in accordance to the label we want
-    #0 - negative, 1 - neutral, 2 - positive
-    #label_val = ['negative','neutral', 'positive']
+    #gets the probabilities of each sentiment label
     sentiment_lst = sp.get_sentiment(str(dataframe_row[utt_column]),mdl,tokenzr)
-
-    #print(sentiment_lst)
-    #index_max = max(range(len(sentiment_lst)), key=sentiment_lst.__getitem__)
     return sentiment_lst
 
 
 def get_emotion_probabilities(dataframe_row,mdl,tokenzr,utt_column):
+    #get the probabilities of each of the 32 emotions
     emotion_lst = em32.get_emotion_32(str(dataframe_row[utt_column]),mdl,tokenzr)
     return emotion_lst
 
 def get_emotion_label(dataframe_row,mdl,tokenzr,utt_column):
+    #get the one emotion label out of 32 for a text utterance
     emotion_lst = em32.get_emotion_32(str(dataframe_row[utt_column]),mdl,tokenzr)
     label = emotion_dictionary[np.argmax(emotion_lst)]
     return label
@@ -168,14 +165,30 @@ def get_VAD_values_for_both(dataframe):
 def main():
     print('Start!')
 
-    database_to_process = 'data_samples'
-    #database_to_process = 'EmpatheticConversations-EC'
+    feature_vector = [
+                  0,    #database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new) 
+                  1,    #intent
+                  1,    #sentiment
+                  1,    #epitome
+                  1,    #vad lexicon
+                  1,    #length
+                  1,    #separated intent
+                  1,    #emotion
+                  1,    #emotion 32 -> 20
+                  1,    #emotion 32 -> 8
+                  1,    #emotion mimicry
+                  ]
 
-    #setup subdirectory of data samples
+
+    if feature_vector[0] == 0:
+        database_to_process = 'EmpatheticConversations-EC'
+    else:
+        database_to_process = 'data_samples'
+
+    #setup subdirectory of processed data
     dataSubDir = './unprocessed_databases/'+database_to_process+'/'
-    
-
     empIntSubDir = './classifiers/empathetic_intent/'
+
 
     #get all files
     file_list = [name for name in os.listdir(dataSubDir) if os.path.isfile(dataSubDir+name)]
@@ -201,13 +214,14 @@ def main():
             exit(1)
         df = df.rename(columns={"evaluation": "empathy"})
     else:
-        
+        print('retrieving dataset....')
         temp_df = pd.read_csv(dataSubDir+'EmpatheticConversations.csv')
         #print(temp_df.head())
         df = pd.concat([df,temp_df])
         df['is_response'] = df['utterance_idx'].apply(is_responde)
         df = df.drop(columns=['ut_len','Talker','Sentiment','Emotion','Taxonomy','Intent'])
         df = df.rename(columns={"Empathy": "empathy"})
+        print('done')
     
 
     
@@ -271,8 +285,12 @@ def main():
     exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
     exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
     #reduce number of emotion labels
+
+    '''
     exchange_df = em_red.reduce_emotion_labels('speaker_emotion',exchange_df)
     exchange_df = em_red.reduce_emotion_labels('listener_emotion',exchange_df)
+    '''
+
 
     #print(exchange_df)
     print('done')
