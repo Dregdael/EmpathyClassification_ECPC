@@ -2,7 +2,6 @@ from transformers import AutoModelForSequenceClassification
 from transformers import TFAutoModelForSequenceClassification
 from transformers import AutoTokenizer, AutoConfig
 from scipy.special import softmax
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 

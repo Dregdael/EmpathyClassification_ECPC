@@ -37,13 +37,11 @@ def score(predicted, y):
 
 
 
-def main():
+def test(database_dir,experiment_number):
 
     #setup of directories 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    database_dir_ec = '/EmpatheticConversationsExchangeFormat/'
-    database_dir_ex = '/EmpatheticExchanges/'
-    current_db = database_dir_ec
+    current_db = database_dir
 
     #get test file to compare
     testFile = current_dir + current_db + 'test.csv'
@@ -56,7 +54,7 @@ def main():
     y_test = y_test.drop(columns=x_test.columns)
 
     #get model
-    filename = current_dir + current_db + 'trained_pbc4cip.sav'
+    filename = current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + 'trained_pbc4cip.sav'
     pbc = pickle.load(open(filename, 'rb'))
 
     #predict with model
@@ -67,7 +65,7 @@ def main():
     ClosenessEvaluationMeasure = cem.get_cem(y_pred,y_test)
     
     #send out predictions
-    with open(current_dir + current_db +"predictions.txt", "w") as f:
+    with open(current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + "predictions.txt", "w") as f:
         for prediction in y_pred:
             print(f"{prediction}",file=f)
 
@@ -81,8 +79,8 @@ def main():
         print("")
     print(f"\n\nacc: {acc} , auc: {auc}, cem: {ClosenessEvaluationMeasure}")
     
-    #Send results to database 
-    with open(current_dir + current_db +"results.txt", "w") as f:
+    #Send results to output folder 
+    with open(current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + "results.txt", "w") as f:
         print(f"Confusion Matrix:", file=f)
         print(f'row: true, column: predicted ', file=f)
         for i in range(len(confusion[0])):
@@ -91,10 +89,3 @@ def main():
             print("")
         print(f"\n\nacc: {acc} , auc: {auc}, cem: {ClosenessEvaluationMeasure}", file=f)
     
-
-
-    
-if __name__ == '__main__':
-
-    main()
-

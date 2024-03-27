@@ -19,6 +19,7 @@ from classifiers.nrc_vad_lexicon import lexicon_analysis as lexicon
 from sklearn.model_selection import train_test_split
 #emotion
 from classifiers.course_grained_emotion import pretrained_32emotions as em32
+from classifiers.course_grained_emotion import emotion_reductor as em_red
 
 emotion_dictionary = {0: 'afraid', 1: 'angry', 2: 'annoyed', 3: 'anticipating', 4: 'anxious', 5: 'apprehensive', 6: 'ashamed', 7: 'caring', 8: 'confident', 9: 'content', 
  10: 'devastated', 11: 'disappointed', 12: 'disgusted', 13: 'embarrassed', 14: 'excited', 15: 'faithful', 16: 'furious', 17: 'grateful', 18: 'guilty', 
@@ -167,11 +168,11 @@ def get_VAD_values_for_both(dataframe):
 def main():
     print('Start!')
 
-    #database_to_process = 'data_samples'
-    database_to_process = 'EmpatheticConversations-EC'
+    database_to_process = 'data_samples'
+    #database_to_process = 'EmpatheticConversations-EC'
 
     #setup subdirectory of data samples
-    dataSubDir = './'+database_to_process+'/'
+    dataSubDir = './unprocessed_databases/'+database_to_process+'/'
     
 
     empIntSubDir = './classifiers/empathetic_intent/'
@@ -263,15 +264,18 @@ def main():
     exchange_df = exchange_df.drop(columns=['empathetic_intent'])
     print('done')
     #print(exchange_df.head())
-    '''
+
     #get emotion
     print('getting emotion.....')
     emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
     exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
     exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
+    #reduce number of emotion labels
+    exchange_df = em_red.reduce_emotion_labels('speaker_emotion',exchange_df)
+    exchange_df = em_red.reduce_emotion_labels('listener_emotion',exchange_df)
+
     #print(exchange_df)
     print('done')
-    '''
     
     print('separating dataframe for classification...')
     X = exchange_df.drop(columns=['empathy'])
@@ -283,20 +287,20 @@ def main():
     #Output database in csv format. 
     if database_to_process == 'data_samples':  
         #output the processed database
-        exchange_df.to_csv('./EmpatheticExchanges/EmpatheticExchanges.csv',index=False)
+        exchange_df.to_csv('./processed_databases/EmpatheticExchanges/EmpatheticExchanges.csv',index=False)
         columns_to_drop = ['conv_id','prompt','speaker_utterance', 'listener_utterance','context']
         train_df = train_df.drop(columns=columns_to_drop)
         test_df = test_df.drop(columns=columns_to_drop)
-        train_df.to_csv('./EmpatheticExchanges/train.csv',index=False)
-        test_df.to_csv('./EmpatheticExchanges/test.csv',index=False)
+        train_df.to_csv('./processed_databases/EmpatheticExchanges/train.csv',index=False)
+        test_df.to_csv('./processed_databases/EmpatheticExchanges/test.csv',index=False)
     else:
-        exchange_df.to_csv('./EmpatheticConversationsExchangeFormat/EmpatheticConversations_ex.csv',index=False)
+        exchange_df.to_csv('./processed_databases/EmpatheticConversationsExchangeFormat/EmpatheticConversations_ex.csv',index=False)
         #df_to_classify = exchange_df.copy()
         columns_to_drop = ['conv_id','prompt','speaker_utterance', 'listener_utterance','context']
         train_df = train_df.drop(columns=columns_to_drop)
         test_df = test_df.drop(columns=columns_to_drop)
-        train_df.to_csv('./EmpatheticConversationsExchangeFormat/train.csv',index=False)
-        test_df.to_csv('./EmpatheticConversationsExchangeFormat/test.csv',index=False)
+        train_df.to_csv('./processed_databases/EmpatheticConversationsExchangeFormat/train.csv',index=False)
+        test_df.to_csv('./processed_databases/EmpatheticConversationsExchangeFormat/test.csv',index=False)
     print('Database processed successfully!')
 
 

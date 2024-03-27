@@ -16,10 +16,8 @@ from PBC4cip.core.Helpers import get_col_dist, get_idx_val
 
 
 
-def main():
+def train(database_dir,experiment_number):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    database_dir = '/EmpatheticConversationsExchangeFormat/'
-    #database_dir = '/EmpatheticExchanges/'
     trainFile = current_dir + database_dir + 'train.csv'
 
 
@@ -40,13 +38,16 @@ def main():
     
     #training
     patterns = pbc.fit(x_train,y_train)
-    filename = current_dir + database_dir + 'trained_pbc4cip.sav'
-    pickle.dump(pbc, open(filename, 'wb'))
-    with open(current_dir + database_dir +"patterns.txt", "w") as f:
+    filepath = current_dir + '/Experiments/outputs/Experiment ' + str(experiment_number) + '/'
+    filename = 'trained_pbc4cip.sav'
+    if os.path.exists(filepath):
+        print('Path found')
+    else:
+        os.mkdir(filepath)
+
+    pickle.dump(pbc, open(filepath + filename, 'wb'))
+
+    with open(filepath + "patterns.txt", "w") as f:
         for pattern in patterns:
             print(f"{pattern}",file=f)
-
-if __name__ == '__main__':
-
-    main()
 
