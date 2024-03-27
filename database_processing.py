@@ -165,22 +165,21 @@ def get_VAD_values_for_both(dataframe):
 def main():
     print('Start!')
 
-    feature_vector = [
+    control_vector = [
                   0,    #database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new) 
                   1,    #intent
                   1,    #sentiment
                   1,    #epitome
                   1,    #vad lexicon
                   1,    #length
-                  1,    #separated intent
-                  1,    #emotion
-                  1,    #emotion 32 -> 20
-                  1,    #emotion 32 -> 8
+                  0,    #emotion 32
+                  0,    #emotion 20
+                  0,    #emotion 8
                   1,    #emotion mimicry
                   ]
 
 
-    if feature_vector[0] == 0:
+    if control_vector[0] == 0:
         database_to_process = 'EmpatheticConversations-EC'
     else:
         database_to_process = 'data_samples'
@@ -192,10 +191,10 @@ def main():
 
     #get all files
     file_list = [name for name in os.listdir(dataSubDir) if os.path.isfile(dataSubDir+name)]
-
     #create empty dataframe
     df = pd.DataFrame()
 
+    #data retrieval
     if database_to_process == 'data_samples':    
     #get all datasets, process them, and join them
         print('reading datasets....')
@@ -214,6 +213,7 @@ def main():
             exit(1)
         df = df.rename(columns={"evaluation": "empathy"})
     else:
+        #get the dataset EmpatheticConversations (400 conversations from empatheticdialogues evaluated using the Delphi method)
         print('retrieving dataset....')
         temp_df = pd.read_csv(dataSubDir+'EmpatheticConversations.csv')
         #print(temp_df.head())
@@ -222,20 +222,20 @@ def main():
         df = df.drop(columns=['ut_len','Talker','Sentiment','Emotion','Taxonomy','Intent'])
         df = df.rename(columns={"Empathy": "empathy"})
         print('done')
-    
-
-    
+      
     #This is to test with a small dataframe
     #df = df.loc[0:5]
 
+
     #get empathetic intent
-    print('getting intent....')
-    model,tokenizer,device = ip.loadModelTokenizerAndDevice(empIntSubDir) #get model and parameters
-    df['empathetic_intent'] = df.apply(get_emp_intent_probabilities, axis=1, args = (model,tokenizer,device,'utterance'))
-    #exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = df.index)
-    #exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = exchange_df.index)
-    #df['empathetic_intent'] = df.apply(get_emp_intent, axis=1, args = (model,tokenizer,device))  #apply empathetic intent extraction
-    print('done')
+    if control_vector[1] == 1:
+        print('getting intent....')
+        model,tokenizer,device = ip.loadModelTokenizerAndDevice(empIntSubDir) #get model and parameters
+        df['empathetic_intent'] = df.apply(get_emp_intent_probabilities, axis=1, args = (model,tokenizer,device,'utterance'))
+        #exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = df.index)
+        #exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = exchange_df.index)
+        #df['empathetic_intent'] = df.apply(get_emp_intent, axis=1, args = (model,tokenizer,device))  #apply empathetic intent extraction
+        print('done')
 
    
     #prepare the database in exchange format
@@ -243,57 +243,76 @@ def main():
     exchange_df = modify_to_exchange_format(df)
     print('done')
 
+
     #sentiment labels
-    print('getting sentiment....')
-    sent_model, sent_tokenzr = sp.loadSentimentModel() #get model and tokenizer
-    exchange_df['speaker_sentiment'] = exchange_df.apply(get_sentiment_probabilities,axis = 1, args = (sent_model,sent_tokenzr,'speaker_utterance')) #apply sentiment label extraction to speaker
-    exchange_df[['s_negative','s_neutral', 's_positive']] = pd.DataFrame(exchange_df.speaker_sentiment.tolist(),index = exchange_df.index)
-    exchange_df['listener_sentiment'] = exchange_df.apply(get_sentiment_probabilities,axis = 1, args = (sent_model,sent_tokenzr,'listener_utterance')) #apply sentiment label extraction to speaker
-    exchange_df[['l_negative','l_neutral', 'l_positive']] = pd.DataFrame(exchange_df.listener_sentiment.tolist(),index = exchange_df.index)
-    exchange_df = exchange_df.drop(columns=['speaker_sentiment','listener_sentiment'])
-    print('done')
+    if control_vector[2] == 1:
+        print('getting sentiment....')
+        sent_model, sent_tokenzr = sp.loadSentimentModel() #get model and tokenizer
+        exchange_df['speaker_sentiment'] = exchange_df.apply(get_sentiment_probabilities,axis = 1, args = (sent_model,sent_tokenzr,'speaker_utterance')) #apply sentiment label extraction to speaker
+        exchange_df[['s_negative','s_neutral', 's_positive']] = pd.DataFrame(exchange_df.speaker_sentiment.tolist(),index = exchange_df.index)
+        exchange_df['listener_sentiment'] = exchange_df.apply(get_sentiment_probabilities,axis = 1, args = (sent_model,sent_tokenzr,'listener_utterance')) #apply sentiment label extraction to speaker
+        exchange_df[['l_negative','l_neutral', 'l_positive']] = pd.DataFrame(exchange_df.listener_sentiment.tolist(),index = exchange_df.index)
+        exchange_df = exchange_df.drop(columns=['speaker_sentiment','listener_sentiment'])
+        print('done')
 
 
     #call the epitome classifier and get the epitome mechanisms: Emotional reaction (ER), Intepretation (IP), and Explorations (EX)
-    print('getting EPITOME mechanisms....')
-    exchange_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',exchange_df)
-    print('done')
+    if control_vector[3] == 1:
+        print('getting EPITOME mechanisms....')
+        exchange_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',exchange_df)
+        print('done')
 
-    
-    #Annotate Valence, Arousal, and Dominance for the speaker and listener utterances.
-    print('Annotating VAD values.....')
-    exchange_df = get_VAD_values_for_both(exchange_df)
-    print('done')
+    if control_vector[4] == 1:
+        #Annotate Valence, Arousal, and Dominance for the speaker and listener utterances.
+        print('Annotating VAD values.....')
+        exchange_df = get_VAD_values_for_both(exchange_df)
+        print('done')
 
-    #Get length of utterances
-    print('getting length of utterances....')
-    exchange_df['s_word_len'] = exchange_df['speaker_utterance'].apply(get_word_len) 
-    exchange_df['l_word_len'] = exchange_df['listener_utterance'].apply(get_word_len) 
-    print('done')
+    if control_vector[5] == 1:
+        #Get length of utterances
+        print('getting length of utterances....')
+        exchange_df['s_word_len'] = exchange_df['speaker_utterance'].apply(get_word_len) 
+        exchange_df['l_word_len'] = exchange_df['listener_utterance'].apply(get_word_len) 
+        print('done')
 
- 
+    if control_vector[1] == 1:
     #separate intent 
-    print('separating intent....')
-    exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = exchange_df.index)
-    exchange_df = exchange_df.drop(columns=['empathetic_intent'])
-    print('done')
-    #print(exchange_df.head())
+        print('separating intent....')
+        exchange_df[intent_labels] = pd.DataFrame(exchange_df.empathetic_intent.tolist(),index = exchange_df.index)
+        exchange_df = exchange_df.drop(columns=['empathetic_intent'])
+        print('done')
 
     #get emotion
-    print('getting emotion.....')
-    emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
-    exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
-    exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
-    #reduce number of emotion labels
+    if control_vector[6] == 1:      
+        print('getting 32 emotion labels.....')
+        emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
+        exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
+        exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
+        #reduce number of emotion labels
+        print('done')
 
-    '''
-    exchange_df = em_red.reduce_emotion_labels('speaker_emotion',exchange_df)
-    exchange_df = em_red.reduce_emotion_labels('listener_emotion',exchange_df)
-    '''
+    if control_vector[7] == 1:
+        print('getting 20 emotion labels....')
+        emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
+        exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
+        exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
+        exchange_df = em_red.reduce_emotion_labels('speaker_emotion',exchange_df)
+        exchange_df = em_red.reduce_emotion_labels('listener_emotion',exchange_df)
+        print('done')
 
+    if control_vector[8] == 1:
+        print("WARNING: Reduction to Plutchik's 8 basic emotions has not been implemented")
 
-    #print(exchange_df)
-    print('done')
+    if control_vector[9] == 1:
+        print('getting mimicry.........')
+        emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
+        exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
+        exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
+        exchange_df = em_red.reduce_emotion_labels('speaker_emotion',exchange_df)
+        exchange_df = em_red.reduce_emotion_labels('listener_emotion',exchange_df)   
+        exchange_df = em_red.get_mimicry('speaker_emotion','listener_emotion',exchange_df)
+        exchange_df = exchange_df.drop(columns = ['speaker_emotion','listener_emotion'])
+        print('done')
     
     print('separating dataframe for classification...')
     X = exchange_df.drop(columns=['empathy'])
@@ -302,6 +321,7 @@ def main():
     train_df = pd.concat([X_train, y_train], axis=1)
     test_df = pd.concat([X_test, y_test], axis=1)
     print('done')
+
     #Output database in csv format. 
     if database_to_process == 'data_samples':  
         #output the processed database

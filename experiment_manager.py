@@ -40,15 +40,11 @@ feature_vector = [0,#database to classify 0 = empatheticconversations (old), 1 e
                   1,#epitome
                   1,#vad lexicon
                   1,#length
-                  1,#separated intent
                   1,#emotion
                   1,#emotion 32 -> 20
                   1,#emotion 32 -> 8
                   1,#emotion mimicry
                   ]
-
-
-
 
 #Create path for experiment output
 results_path = current_dir + '/Experiments/outputs/Experiment ' + str(experiment_number) + '/'

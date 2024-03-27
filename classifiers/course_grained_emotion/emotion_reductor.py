@@ -8,8 +8,11 @@ def get_reduced_label(vector,plutchik_8_vector,list_8_emotions,d):
         return list_8_emotions[vector.index(1)]
 
 
+
+
+
 def reduce_emotion_labels(emotion_column,dataframe):
-    print(emotion_column)
+    #print(emotion_column)
     dataframe[str(emotion_column)] = dataframe[str(emotion_column)].astype('category')
     dataframe[emotion_column + "_encoded"] = dataframe[emotion_column].cat.codes
     c = dataframe[emotion_column].astype('category')
@@ -61,5 +64,19 @@ def reduce_emotion_labels(emotion_column,dataframe):
 
     dataframe = dataframe.drop(columns=['emotion_plutchik',emotion_column,emotion_column + "_encoded"])
 
+    dataframe = dataframe.rename(columns = {emotion_column+'_reduced_labels':emotion_column})
+
+
+    return dataframe
+
+def compare(value1,value2):
+    if value1 == value2:
+        return 1
+    else:
+        return 0
+
+def get_mimicry(emotion_column1,emotion_column2, dataframe):
+    #print(dataframe)
+    dataframe['mimicry'] = dataframe.apply(lambda x: 1 if x[emotion_column1] == x[emotion_column2] else 0, axis = 1)
     return dataframe
 
