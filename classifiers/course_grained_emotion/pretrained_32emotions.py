@@ -7,8 +7,8 @@ tokenizer = AutoTokenizer.from_pretrained("bdotloh/distilbert-base-uncased-go-em
 
 
 def load32EmotionsModel():
-    MODEL = "bdotloh/just-another-emotion-classifier"
-    #MODEL = "bdotloh/distilbert-base-uncased-go-emotion-empathetic-dialogues-context-v2"
+    #MODEL = "bdotloh/just-another-emotion-classifier"
+    MODEL = "bdotloh/distilbert-base-uncased-go-emotion-empathetic-dialogues-context-v2"
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
     #config = AutoConfig.from_pretrained(MODEL)
     model = AutoModelForSequenceClassification.from_pretrained(MODEL)
