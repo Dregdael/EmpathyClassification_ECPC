@@ -23,35 +23,58 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 22
+experiment_number = 28
 #whether to do training or use an already trained model
-do_training = 0
+do_training = 1
 #choose training database
 train_database_dir = database_dir_ex
 #choose testing database
 test_database_dir = database_dir_ex
 #already trained model
 model_path = current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + 'trained_pbc4cip.sav'
-already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(20) + '/' + 'trained_pbc4cip.sav'
+already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(25) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
 reprocess_database = 1
+
+
+
 #control vector for database processing
-database_control_vector = [1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new) 
+database_control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
                             1,#intent
                             1,#sentiment
                             1,#epitome
                             1,#vad lexicon
                             1,#length
-                            0,#emotion 32
+                            1,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
                             1,#emotion mimicry
+                            1 #reduce empathy labels
                             ]
+
+
+
 
 
 #If it is necessary to reprocess database, send instructions and carry out the procedure. 
 if reprocess_database == 1:
-    data_processer.process_database(database_control_vector)
+    if test_database_dir == train_database_dir:
+        if 'EmpatheticExchanges' in train_database_dir:
+            print('Processing EmpatheticExchanges')
+            database_control_vector[0] = 1
+            print(database_control_vector)
+            data_processer.process_database(database_control_vector)
+        else:
+            print('Processing EmpatheticConversations in exchange format')
+            database_control_vector[0] = 0
+            print(database_control_vector)
+            data_processer.process_database(database_control_vector)           
+    else: 
+        print('Processing both databases')
+        database_control_vector[0] = 0
+        data_processer.process_database(database_control_vector)
+        database_control_vector[0] = 1
+        data_processer.process_database(database_control_vector)
 
 print('')
 
@@ -72,7 +95,7 @@ if do_training == 1:
     data_train = pd.read_csv(trainFile)
     data_train["empathy"] = data_train["empathy"].astype('int')
     data_train["empathy"] = data_train["empathy"].astype('string')
-    data_train['mimicry'] = data_train['mimicry'].astype('category')
+    #data_train['mimicry'] = data_train['mimicry'].astype('category')
     print(f'Features from the training database')
     print(data_train.columns)
     print(f'Number of datapoints in training database: {len(data_train)}')

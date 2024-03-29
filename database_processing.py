@@ -160,22 +160,20 @@ def get_VAD_values_for_both(dataframe):
 
 
 def main():
-    print('Start!')
-
+    print('Starting database processing!')
     control_vector = [
                   1,    #database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new) 
-                  1,    #intent
-                  1,    #sentiment
-                  1,    #epitome
-                  1,    #vad lexicon
-                  1,    #length
-                  1,    #emotion 32
+                  0,    #intent
+                  0,    #sentiment
+                  0,    #epitome
+                  0,    #vad lexicon
+                  0,    #length
+                  0,    #emotion 32
                   0,    #emotion 20
                   0,    #emotion 8
                   0,    #emotion mimicry
+                  1,    #reduced_empathy_labels
                   ]
-
-
     if control_vector[0] == 0:
         database_to_process = 'EmpatheticConversations-EC'
     else:
@@ -301,20 +299,45 @@ def main():
 
     #get 8 course-grained-emotion labels
     if control_vector[8] == 1:
-        print("WARNING: Reduction to Plutchik's 8 basic emotions has not been implemented")
-
-    #get if mimicry is being done
-    if control_vector[9] == 1:
-        print('getting mimicry.........')
+        print('getting 8 emotion labels....')
         emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
         exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
         exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
-        exchange_df = em_red.reduce_emotion_labels('speaker_emotion',exchange_df)
-        exchange_df = em_red.reduce_emotion_labels('listener_emotion',exchange_df)   
-        exchange_df = em_red.get_mimicry('speaker_emotion','listener_emotion',exchange_df)
-        exchange_df = exchange_df.drop(columns = ['speaker_emotion','listener_emotion'])
+        exchange_df = em_red.reduce_emotion_labels_to_8('speaker_emotion',exchange_df)
+        exchange_df = em_red.reduce_emotion_labels_to_8('listener_emotion',exchange_df)
+        print('done')
+    #get if mimicry is being done
+    if control_vector[9] == 1:
+        print('getting mimicry.........')
+        if ((control_vector[6] == 1) or (control_vector[7] == 1) or (control_vector[8] == 1)):
+            #If there are already emotion labels, get mimicry if they speaker and listener have the same emotion
+            exchange_df = em_red.get_mimicry('speaker_emotion','listener_emotion',exchange_df)
+        else:
+            #if no emotion labels are being used, get mimicry through alternative means
+            if(control_vector[4] == 1):
+                #get the emotional distance and if it is less than 0.1 set mimicry to 1
+                print('No labels detected, obtaining mimicry through emotional distance using VAD....')
+                exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
+                exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)
+                exchange_df = exchange_df.drop(columns=['emotional_distance'])
+            else: 
+                #Else, obtain the least amount of emotion labels possible and use that to get the mimicry
+                print('No VAD values , obtaining mimicry through emotional distance using VAD....')
+                emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
+                exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
+                exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label,axis = 1, args = (emo32_model,emo32_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
+                exchange_df = em_red.reduce_emotion_labels_to_8('speaker_emotion',exchange_df)
+                exchange_df = em_red.reduce_emotion_labels_to_8('listener_emotion',exchange_df)   
+                exchange_df = em_red.get_mimicry('speaker_emotion','listener_emotion',exchange_df)
+                exchange_df = exchange_df.drop(columns = ['speaker_emotion','listener_emotion'])
         print('done')
     
+    #reduce empathy labels
+    if control_vector[10] == 1:
+        print('Reducing labels to three....')
+        exchange_df['empathy_red'] = exchange_df.apply(lambda x: 1 if (x['empathy'] == 2 or x['empathy'] == 1)  else (2 if x['empathy'] == 3 else 3), axis = 1)
+        print('done!')
+
     print('separating dataframe for classification...')
     X = exchange_df.drop(columns=['empathy'])
     y = exchange_df['empathy']
@@ -322,6 +345,9 @@ def main():
     train_df = pd.concat([X_train, y_train], axis=1)
     test_df = pd.concat([X_test, y_test], axis=1)
     print('done')
+
+
+
 
     #Output database in csv format. 
     if database_to_process == 'data_samples':  
