@@ -35,7 +35,7 @@ def score(predicted, y):
 
 
 
-def test(experiment_number,data_test,model_path):
+def test(experiment_number,data_test,model_path,features_used):
 
     #setup of directories 
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -76,6 +76,8 @@ def test(experiment_number,data_test,model_path):
     
     #Send results to output folder 
     with open(current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + "results.txt", "w") as f:
+        print(features_used, file=f)
+        print('', file=f)
         print(f"Confusion Matrix:", file=f)
         print(f'row: true, column: predicted ', file=f)
         for i in range(len(confusion[0])):
@@ -83,4 +85,5 @@ def test(experiment_number,data_test,model_path):
                print(f"{confusion[i][j]} ", end='', file=f)
             print("", file=f)
         print(f"\n\nacc: {acc} , auc: {auc}, cem: {ClosenessEvaluationMeasure}", file=f)
+        
     

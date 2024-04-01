@@ -2,6 +2,7 @@ import pickle
 import pandas as pd
 import torch
 import os
+import sys
 
 from PBC4cip import PBC4cip
 import os
@@ -17,13 +18,19 @@ import train_classifier as trainer
 import test_classifier as tester
 import database_processing_package as data_processer
 
+#for iteration for experiments
+import itertools
+
+
+
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 #Available databases
 database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 28
+experiment_number = 29
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -31,13 +38,11 @@ train_database_dir = database_dir_ex
 #choose testing database
 test_database_dir = database_dir_ex
 #already trained model
-model_path = current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + 'trained_pbc4cip.sav'
 already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(25) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
 reprocess_database = 1
-
-
-
+#automated processing flag 
+auto_experiments = 1
 #control vector for database processing
 database_control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
                             1,#intent
@@ -53,77 +58,129 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
                             ]
 
 
+control_vector_dictionary = {0:'database_to_classify', 1: 'intent', 2:'sentiment', 3:'EPITOME Mechanisms', 4:'VAD vectors', 5: 'Length of utterances', 6: '32 emotion labels', 7:'20 emotion labels', 8: '8 emotion labels', 9: 'emotion mimicry', 10: 'Reduced empathy labels'}
+
+
+if auto_experiments == 1:
+    #select number of features to modify
+    number_of_features=5
+    #create list of variations
+    variation_lst = list(map(list, itertools.product([0, 1], repeat=number_of_features)))
+    #control vectors that will be carried out automatically
+    control_vector_list = []
+    for i in list(variation_lst): 
+        control_vector = [database_control_vector[0]]
+        control_vector = control_vector + i[:-1] #combination of four characteristics
+        control_vector.append(1) #have length
+        control_vector = control_vector + [0,0,0] #have no emotion labels
+        control_vector.append(i[-1]) #alternating mimicry
+        control_vector.append(database_control_vector[10]) #reduced empathy labels
+        control_vector_list.append(control_vector)
+        #print()
+    print('List of control vectors created, auto_experimentation is on.')
+    print(f'Number of features that will vary: {number_of_features}')
+    print(f'Following experiments will carried out: {experiment_number} to {experiment_number+len(control_vector_list)}')
+    answer = input("Continue (y/n)?")
+    if answer.lower() in ["y","yes"]:
+        print('Automatic experimentation will be carried out, directories might be overwritten')
+    elif answer.lower() in ["n","no"]:
+        sys.exit(0)
+    else:
+        print('Wrong input received, aborting operation')
+        sys.exit(1)
+else: 
+    #control_vectors that will be 
+    print('Single experiment mode selected')
+    control_vector_list = [database_control_vector]
 
 
 
-#If it is necessary to reprocess database, send instructions and carry out the procedure. 
-if reprocess_database == 1:
-    if test_database_dir == train_database_dir:
-        if 'EmpatheticExchanges' in train_database_dir:
-            print('Processing EmpatheticExchanges')
-            database_control_vector[0] = 1
-            print(database_control_vector)
-            data_processer.process_database(database_control_vector)
-        else:
-            print('Processing EmpatheticConversations in exchange format')
-            database_control_vector[0] = 0
-            print(database_control_vector)
-            data_processer.process_database(database_control_vector)           
+for control_vector in control_vector_list:
+    print(f'Experiment #{experiment_number}')
+    #create a string version of features
+    features_used = 'Features used: \n\n'
+    for i in range(len(control_vector)):
+        features_used  = features_used + control_vector_dictionary[i] + ': ' + str(control_vector[i]) + ' \n'
+
+
+    print(features_used)
+
+    #If it is necessary to reprocess database, send instructions and carry out the procedure. 
+    if reprocess_database == 1:
+        if test_database_dir == train_database_dir:
+            if 'EmpatheticExchanges' in train_database_dir:
+                print('Processing EmpatheticExchanges')
+                control_vector[0] = 1
+                print(control_vector)
+                data_processer.process_database(control_vector)
+            else:
+                print('Processing EmpatheticConversations in exchange format')
+                control_vector[0] = 0
+                print(control_vector)
+                data_processer.process_database(control_vector)           
+        else: 
+            print('Processing both databases')
+            control_vector[0] = 0
+            data_processer.process_database(control_vector)
+            control_vector[0] = 1
+            data_processer.process_database(control_vector)
+
+    print('')
+
+    #Create path for experiment output
+    results_path = current_dir + '/Experiments/outputs/Experiment ' + str(experiment_number) + '/'
+    if os.path.exists(results_path):
+        print('WARNING: Experimental path found')
+    else:
+        print('Creating Experimental path')
+        os.mkdir(results_path)
+
+    print('')
+
+    #If you have to retrain the model, obtain training dataset
+    if do_training == 1:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        trainFile = current_dir + train_database_dir + 'train.csv'
+        data_train = pd.read_csv(trainFile)
+        data_train["empathy"] = data_train["empathy"].astype('int')
+        data_train["empathy"] = data_train["empathy"].astype('string')
+        #data_train['mimicry'] = data_train['mimicry'].astype('category')
+        print(f'Features from the training database')
+        print(data_train.columns)
+        print(f'Number of datapoints in training database: {len(data_train)}')
+    #Else, use an already trained model at a given path.
     else: 
-        print('Processing both databases')
-        database_control_vector[0] = 0
-        data_processer.process_database(database_control_vector)
-        database_control_vector[0] = 1
-        data_processer.process_database(database_control_vector)
+        print(f'NO TRAINING, using model located at: {already_trained_model_path}')
 
-print('')
-
-#Create path for experiment output
-results_path = current_dir + '/Experiments/outputs/Experiment ' + str(experiment_number) + '/'
-if os.path.exists(results_path):
-    print('WARNING: Experimental path found')
-else:
-    print('Creating Experimental path')
-    os.mkdir(results_path)
-
-print('')
-
-#If you have to retrain the model, obtain training dataset
-if do_training == 1:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    trainFile = current_dir + train_database_dir + 'train.csv'
-    data_train = pd.read_csv(trainFile)
-    data_train["empathy"] = data_train["empathy"].astype('int')
-    data_train["empathy"] = data_train["empathy"].astype('string')
-    #data_train['mimicry'] = data_train['mimicry'].astype('category')
-    print(f'Features from the training database')
-    print(data_train.columns)
-    print(f'Number of datapoints in training database: {len(data_train)}')
-#Else, use an already trained model at a given path.
-else: 
-    print(f'NO TRAINING, using model located at: {already_trained_model_path}')
-
-#Where the test file is located
-testFile = current_dir + test_database_dir + 'test.csv'
-#read test dataframe
-data_test = pd.read_csv(testFile)
+    #Where the test file is located
+    testFile = current_dir + test_database_dir + 'test.csv'
+    #read test dataframe
+    data_test = pd.read_csv(testFile)
 
 
-#Print features of the dataframe used for testing
-print(f'Features from the testing database')
-print(data_test.columns)
+    #Print features of the dataframe used for testing
+    print(f'Features from the testing database')
+    print(data_test.columns)
 
-#Print ho wmany datapoints 
-print(f'Number of datapoints in testing database: {len(data_test)}')
+    #Print ho wmany datapoints 
+    print(f'Number of datapoints in testing database: {len(data_test)}')
 
-#If we have to train, carry out the procedure using a trainer and test the results using a test set 
-if do_training == 1:
-    trainer.train(experiment_number,data_train)
-    model_path = current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + 'trained_pbc4cip.sav'
-    tester.test(experiment_number,data_test,model_path)
-else: 
-#If training is unnecessary, test the classifier on a test set 
-    tester.test(experiment_number,data_test,already_trained_model_path)
+    print()
+
+    #If we have to train, carry out the procedure using a trainer and test the results using a test set 
+    if do_training == 1:
+        trainer.train(experiment_number,data_train)
+        model_path = current_dir + '/Experiments/outputs/Experiment '+ str(experiment_number) + '/' + 'trained_pbc4cip.sav'
+        tester.test(experiment_number,data_test,model_path,features_used)
+    else: 
+    #If training is unnecessary, test the classifier on a test set 
+        tester.test(experiment_number,data_test,already_trained_model_path,features_used)
+    #increase experiment number
+    print(f'Successfully carried out experiment # {experiment_number}')
+
+    experiment_number +=1
+    print()
+    print()
 
 
 
