@@ -30,7 +30,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 29
+experiment_number = 67
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -42,15 +42,15 @@ already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ s
 #whether to reprocess the database
 reprocess_database = 1
 #automated processing flag 
-auto_experiments = 1
+auto_experiments = 0
 #control vector for database processing
 database_control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
                             1,#intent
                             1,#sentiment
-                            1,#epitome
-                            1,#vad lexicon
+                            0,#epitome
+                            0,#vad lexicon
                             1,#length
-                            1,#emotion 32
+                            0,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
                             1,#emotion mimicry
@@ -60,6 +60,7 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
 
 control_vector_dictionary = {0:'database_to_classify', 1: 'intent', 2:'sentiment', 3:'EPITOME Mechanisms', 4:'VAD vectors', 5: 'Length of utterances', 6: '32 emotion labels', 7:'20 emotion labels', 8: '8 emotion labels', 9: 'emotion mimicry', 10: 'Reduced empathy labels'}
 
+feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10}
 
 if auto_experiments == 1:
     #select number of features to modify
@@ -84,6 +85,7 @@ if auto_experiments == 1:
     if answer.lower() in ["y","yes"]:
         print('Automatic experimentation will be carried out, directories might be overwritten')
     elif answer.lower() in ["n","no"]:
+        print('Aborting operation')
         sys.exit(0)
     else:
         print('Wrong input received, aborting operation')
@@ -144,7 +146,9 @@ for control_vector in control_vector_list:
         data_train = pd.read_csv(trainFile)
         data_train["empathy"] = data_train["empathy"].astype('int')
         data_train["empathy"] = data_train["empathy"].astype('string')
-        #data_train['mimicry'] = data_train['mimicry'].astype('category')
+        if control_vector[feature2number['emotion_mimicry']] == 1:
+            data_train['mimicry'] = data_train['mimicry'].astype('category')
+            data_train['mimicry'] = data_train['mimicry'].astype('string')
         print(f'Features from the training database')
         print(data_train.columns)
         print(f'Number of datapoints in training database: {len(data_train)}')
