@@ -22,15 +22,13 @@ import database_processing_package as data_processer
 import itertools
 
 
-
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
 #Available databases
 database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 67
+experiment_number = 69
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -47,14 +45,15 @@ auto_experiments = 0
 database_control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
                             1,#intent
                             1,#sentiment
-                            0,#epitome
-                            0,#vad lexicon
+                            1,#epitome
+                            1,#vad lexicon
                             1,#length
                             0,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
                             1,#emotion mimicry
-                            1 #reduce empathy labels
+                            1,#reduced empathy labels
+                            1 #exchange number
                             ]
 
 

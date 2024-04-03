@@ -119,6 +119,8 @@ def fill_dataframe(dataframe):
 def modify_to_exchange_format(dataframe):
     dataframe['speaker_utterance'] = ''
     dataframe['listener_utterance'] = ''
+    #exchange number in the conversation
+    dataframe['exchange_number'] = 0
     #dataframe['speaker_sentiment'] = ''
     #dataframe['listener_sentiment'] = ''
     conversation_ids = dataframe.conv_id.unique()
@@ -134,6 +136,7 @@ def modify_to_exchange_format(dataframe):
             if(convo.loc[i,'utterance_idx'] %2 == 0):
                 convo.loc[i, 'speaker_utterance'] = convo.loc[i-1, 'utterance']
                 convo.loc[i, 'listener_utterance'] = convo.loc[i, 'utterance']
+                convo.loc[i, 'exchange_number'] = int(convo.loc[i,'utterance_idx'] / 2)
                 #convo.loc[i, 'speaker_sentiment'] = convo.loc[i-1, 'sentiment_label']
                 #convo.loc[i, 'listener_sentiment'] = convo.loc[i, 'sentiment_label']
         epitome_df = pd.concat([epitome_df,convo])
@@ -174,7 +177,7 @@ def get_cosine_similarity(dataframe_row):
 def process_database(control_vector):
     print('Starting database processing!')
     #dictionary to obtain position in binary control vector using the feature of interest
-    feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10}
+    feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10, 'exchange_number' : 11}
 
 
     '''
@@ -189,7 +192,8 @@ def process_database(control_vector):
                   0,    #emotion 20
                   0,    #emotion 8
                   0,    #emotion mimicry
-                  0    #reduced_empathy_labels
+                  0,    #reduced_empathy_labels
+                  0     #exchange number in the conversation
                   ]
     '''
 
@@ -365,6 +369,13 @@ def process_database(control_vector):
         exchange_df = exchange_df.drop(columns=['empathy'])
         exchange_df = exchange_df.rename(columns={"empathy_red": "empathy"})
         print('done!')
+
+    #if explicitely told to ignore exchange number
+    if control_vector[feature2number['exchange_number'] != 1]:
+        exchange_df = exchange_df.drop(columns=['exchange_number'])
+
+
+
 
     print('separating dataframe for classification...')
     X = exchange_df.drop(columns=['empathy'])
