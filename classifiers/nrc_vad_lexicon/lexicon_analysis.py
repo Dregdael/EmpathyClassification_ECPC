@@ -34,6 +34,7 @@ def setup_lexicon(lex_dir):
     lexicon_df = lexicon_df.rename(columns={0:'word',1:'valence', 2:'arousal',3:'dominance'})
     wnl = WordNetLemmatizer()
     stop_words = stopwords.words('english')
+
     return lexicon_df,wnl,stop_words
 
 def get_avg_vad(str2process,lexicon_df,lmtzr,stp_wrds):

@@ -6,7 +6,7 @@ from torch import cuda
 from transformers import BertForSequenceClassification, BertConfig, BertTokenizer,pipeline
 import re
 import numpy as np
-
+from numpy.linalg import norm
 
 
 #sentiment
@@ -176,21 +176,20 @@ def main():
     print('Starting database processing!')
     #dictionary to obtain position in binary control vector using the feature of interest
     feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10, 'exchange_number' : 11}
-
-    control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
-                        1,#intent
-                        1,#sentiment
-                        0,#epitome
-                        0,#vad lexicon
-                        1,#length
-                        0,#emotion 32
-                        0,#emotion 20
-                        0,#emotion 8
-                        1,#emotion mimicry
-                        1, #reduce empathy labels
-                        1 #exchange number
-                        ]
-
+    control_vector = [
+                  1,    #database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new) 
+                  1,    #intent
+                  1,    #sentiment
+                  1,    #epitome
+                  1,    #vad lexicon
+                  1,    #length
+                  1,    #emotion 32
+                  0,    #emotion 20
+                  0,    #emotion 8
+                  0,    #emotion mimicry
+                  0,    #reduced_empathy_labels
+                  0     #exchange number in the conversation
+                  ]
     if control_vector[feature2number['database_to_classify']] == 0:
         database_to_process = 'EmpatheticConversations-EC'
     else:
@@ -255,8 +254,6 @@ def main():
     exchange_df = modify_to_exchange_format(df)
     print('done')
 
-    print(exchange_df.columns)
-
 
     #sentiment labels
     if control_vector[feature2number['sentiment']] == 1:
@@ -278,7 +275,6 @@ def main():
 
     #Annotate Valence, Arousal, and Dominance for the speaker and listener utterances.
     if control_vector[feature2number['VAD_vectors']] == 1:
-        
         print('Annotating VAD values.....')
         exchange_df = get_VAD_values_for_both(exchange_df)
         print('done')
@@ -341,7 +337,7 @@ def main():
                 exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
                 #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
                 #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)               
-                exchange_df = exchange_df.drop(columns = ['valence_speaker','arousal_speaker','dominance_speaker','valence_listener','arousal_listener','dominance_listener','emotional_similarity'])
+                exchange_df = exchange_df.drop(columns = ['emotional_similarity'])
                 #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
                 #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)
                 #exchange_df = exchange_df.drop(columns=['emotional_distance'])
@@ -367,8 +363,14 @@ def main():
         print('done!')
 
     #if explicitely told to ignore exchange number
-    if control_vector[feature2number['exchange_number'] != 1]:
+    if control_vector[feature2number['exchange_number']] == 0:
+        print('eliminating exchange_number')
         exchange_df = exchange_df.drop(columns=['exchange_number'])
+    else: 
+        print('Keeping exchange number')
+
+
+
 
     print('separating dataframe for classification...')
     X = exchange_df.drop(columns=['empathy'])
@@ -378,10 +380,15 @@ def main():
     test_df = pd.concat([X_test, y_test], axis=1)
     print('done')
 
+
+
+
     #Output database in csv format. 
     if database_to_process == 'data_samples':  
         #output the processed database
         exchange_df.to_csv('./processed_databases/EmpatheticExchanges/EmpatheticExchanges.csv',index=False)
+        train_df.to_csv('./processed_databases/EmpatheticExchanges/EmpatheticExchanges_train.csv',index=False)
+        test_df.to_csv('./processed_databases/EmpatheticExchanges/EmpatheticExchanges_test.csv',index=False)
         columns_to_drop = ['conv_id','prompt','speaker_utterance', 'listener_utterance','context']
         train_df = train_df.drop(columns=columns_to_drop)
         test_df = test_df.drop(columns=columns_to_drop)
@@ -389,14 +396,14 @@ def main():
         test_df.to_csv('./processed_databases/EmpatheticExchanges/test.csv',index=False)
     else:
         exchange_df.to_csv('./processed_databases/EmpatheticConversationsExchangeFormat/EmpatheticConversations_ex.csv',index=False)
-        #df_to_classify = exchange_df.copy()
+        train_df.to_csv('./processed_databases/EmpatheticExchanges/EmpatheticExchanges_train.csv',index=False)
+        test_df.to_csv('./processed_databases/EmpatheticExchanges/EmpatheticExchanges_test.csv',index=False)
         columns_to_drop = ['conv_id','prompt','speaker_utterance', 'listener_utterance','context']
         train_df = train_df.drop(columns=columns_to_drop)
         test_df = test_df.drop(columns=columns_to_drop)
         train_df.to_csv('./processed_databases/EmpatheticConversationsExchangeFormat/train.csv',index=False)
         test_df.to_csv('./processed_databases/EmpatheticConversationsExchangeFormat/test.csv',index=False)
     print('Database processed successfully!')
-
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 69
+experiment_number = 71
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -43,23 +43,26 @@ reprocess_database = 1
 auto_experiments = 0
 #control vector for database processing
 database_control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
-                            1,#intent
-                            1,#sentiment
-                            1,#epitome
-                            1,#vad lexicon
+                            0,#intent
+                            0,#sentiment
+                            0,#epitome
+                            0,#vad lexicon
                             1,#length
                             0,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
-                            1,#emotion mimicry
+                            0,#emotion mimicry
                             1,#reduced empathy labels
-                            1 #exchange number
+                            0, #exchange number
+                            1 #output processed database
                             ]
 
 
-control_vector_dictionary = {0:'database_to_classify', 1: 'intent', 2:'sentiment', 3:'EPITOME Mechanisms', 4:'VAD vectors', 5: 'Length of utterances', 6: '32 emotion labels', 7:'20 emotion labels', 8: '8 emotion labels', 9: 'emotion mimicry', 10: 'Reduced empathy labels'}
+control_vector_dictionary = {0:'database_to_classify', 1: 'intent', 2:'sentiment', 3:'EPITOME Mechanisms', 4:'VAD vectors', 5: 'Length of utterances', 6: '32 emotion labels', 7:'20 emotion labels', 8: '8 emotion labels', 9: 'emotion mimicry', 10: 'Reduced empathy labels', 11: 'exchange number', 12: 'output'}
 
-feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10}
+feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10, 'exchange_number' : 11, 'output' : 12}
+
+#print(database_control_vector[feature2number['exchange_number']])
 
 if auto_experiments == 1:
     #select number of features to modify

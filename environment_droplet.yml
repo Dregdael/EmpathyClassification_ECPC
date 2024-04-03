@@ -1,4 +1,4 @@
-name: emp_det
+name: emp_detec
 channels:
   - pytorch
   - nvidia
@@ -215,4 +215,4 @@ dependencies:
   - pip:
       - pbc4cip==0.0.0.8
       - pip==24.0
-prefix: /home/haru/miniconda3/envs/emp_det
+prefix: /home/haru/miniconda3/envs/emp_detec
