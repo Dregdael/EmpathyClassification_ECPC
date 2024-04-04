@@ -1,25 +1,22 @@
 
 def get_reduced_label(vector,plutchik_8_vector,list_8_emotions,d):
-    if vector.count(1) > 2:
+    print(vector)
+    if vector[0].count(1) > 2:
+        print('>2')
+        print(plutchik_8_vector.index(vector))
         return d[plutchik_8_vector.index(vector)]
-    elif vector.count(1) == 2:
+    elif vector[0].count(1) == 2:
+        print('2')
+        print(plutchik_8_vector.index(vector))
         return d[plutchik_8_vector.index(vector)]
     else:
-        return list_8_emotions[vector.index(1)]
+        print(list_8_emotions[vector[0].index(1)])
+        return list_8_emotions[vector[0].index(1)]
 
 
 
 
 def reduce_emotion_labels(emotion_column,dataframe):
-    #print(emotion_column)
-    dataframe[str(emotion_column)] = dataframe[str(emotion_column)].astype('category')
-    dataframe[emotion_column + "_encoded"] = dataframe[emotion_column].cat.codes
-    c = dataframe[emotion_column].astype('category')
-    dictionary = dict(enumerate(c.cat.categories))
-    #print(d)
-    #print(df_train.head())
-    plutchik_emotions = ["joy", "trust", "fear", "surprise", "sadness", "disgust", "anger", "anticipation"]
-
     plutchik_equivalencies = [[[0,0,1,0,0,0,0,0],2], #afraid
                             [[0,0,0,0,0,0,1,0],2], #angry
                             [[0,0,0,0,0,0,1,0],3], #annoyed
@@ -53,17 +50,49 @@ def reduce_emotion_labels(emotion_column,dataframe):
                             [[0,0,1,0,0,0,0,0],1], #terrified
                             [[0,1,0,0,0,0,0,0],2]] #trusting
 
-    plutchik_equivalencies_wo_intensity = []
-    for i in range(len(plutchik_equivalencies)):
-        plutchik_equivalencies_wo_intensity.append(plutchik_equivalencies[i][0])
-
-    dataframe['emotion_plutchik'] = dataframe[emotion_column + "_encoded"].apply(lambda x: plutchik_equivalencies[x][0])
+    dictionary = {'afraid':'fear',
+                  'angry': 'anger',
+                  'annoyed': 'anger',
+                  'anticipating': 'anticipation',
+                  'anxious': 'fear',
+                  'apprehensive': 'fear',
+                  'ashamed': 'ashamed',
+                  'caring': 'caring',
+                  'confident': 'confident',
+                  'content': 'joy',
+                  'devastated': 'devastated',
+                  'disappointed': 'disappointed',
+                  'disgusted':'disgust',
+                  'embarassed':'embarassed',
+                  'excited':'excited',
+                  'faithful':'faithful',
+                  'furious':'anger',
+                  'grateful':'grateful',
+                  'guilty':'guilty',
+                  'hopeful':'hopeful',
+                  'impressed':'impressed',
+                  'jealous':'jealous',
+                  'joyful':'joy',
+                  'lonely':'sadness',
+                  'nostalgic':'nostalgic',
+                  'prepared':'anticipation',
+                  'proud':'proud',
+                  'sad':'sadness',
+                  'sentimental':'trust',
+                  'surprised':'surprise',
+                  'terrified':'fear',
+                  'trusting':'trust',
+                  'joy': 'joy',
+                  'trust': 'trust',
+                  'fear': 'fear',
+                  'surprise': 'surprise',
+                  'sadness': 'sadness',
+                  'disgust': 'disgust',
+                  'anger': 'anger',
+                  'anticipation': 'anticipation'
+                  }
     
-    dataframe[emotion_column+'_reduced_labels'] = dataframe['emotion_plutchik'].apply(get_reduced_label, args = (plutchik_equivalencies_wo_intensity,plutchik_emotions,dictionary))
-
-    dataframe = dataframe.drop(columns=['emotion_plutchik',emotion_column,emotion_column + "_encoded"])
-
-    dataframe = dataframe.rename(columns = {emotion_column+'_reduced_labels':emotion_column})
+    dataframe[emotion_column] = dataframe[emotion_column].apply(lambda x: dictionary[x])
 
 
     return dataframe
@@ -72,13 +101,7 @@ def reduce_emotion_labels(emotion_column,dataframe):
 
 
 def reduce_emotion_labels_to_8(emotion_column,dataframe):
-    #print(emotion_column)
-    dataframe[str(emotion_column)] = dataframe[str(emotion_column)].astype('category')
-    dataframe[emotion_column + "_encoded"] = dataframe[emotion_column].cat.codes
-    c = dataframe[emotion_column].astype('category')
-    dictionary = dict(enumerate(c.cat.categories))
-    #print(d)
-    #print(df_train.head())
+
     plutchik_emotions = ["joy", "trust", "fear", "surprise", "sadness", "disgust", "anger", "anticipation"]
 
     plutchik_equivalencies = [[[0,0,1,0,0,0,0,0],2], #afraid
@@ -114,17 +137,49 @@ def reduce_emotion_labels_to_8(emotion_column,dataframe):
                             [[0,0,1,0,0,0,0,0],1], #terrified
                             [[0,1,0,0,0,0,0,0],2]] #trusting
 
-    plutchik_equivalencies_wo_intensity = []
-    for i in range(len(plutchik_equivalencies)):
-        plutchik_equivalencies_wo_intensity.append(plutchik_equivalencies[i][0])
-
-    dataframe['emotion_plutchik'] = dataframe[emotion_column + "_encoded"].apply(lambda x: plutchik_equivalencies[x][0])
+    dictionary = {'afraid':'fear',
+                  'angry': 'anger',
+                  'annoyed': 'anger',
+                  'anticipating': 'anticipation',
+                  'anxious': 'fear',
+                  'apprehensive': 'fear',
+                  'ashamed': 'disgust',
+                  'caring': 'trust',
+                  'confident': 'anticipation',
+                  'content': 'joy',
+                  'devastated': 'sadness',
+                  'disappointed': 'sadness',
+                  'disgusted':'disgust',
+                  'embarassed':'disgust',
+                  'excited':'joy',
+                  'faithful':'trust',
+                  'furious':'anger',
+                  'grateful':'trust',
+                  'guilty':'disgust',
+                  'hopeful':'anticipation',
+                  'impressed':'surprise',
+                  'jealous':'sadness',
+                  'joyful':'joy',
+                  'lonely':'sadness',
+                  'nostalgic':'sadness',
+                  'prepared':'anticipation',
+                  'proud':'joy',
+                  'sad':'sadness',
+                  'sentimental':'trust',
+                  'surprised':'surprise',
+                  'terrified':'fear',
+                  'trusting':'trust',
+                  'joy': 'joy',
+                  'trust': 'trust',
+                  'fear': 'fear',
+                  'surprise': 'surprise',
+                  'sadness': 'sadness',
+                  'disgust': 'disgust',
+                  'anger': 'anger',
+                  'anticipation': 'anticipation'
+                  }
     
-    dataframe[emotion_column+'_reduced_labels'] = dataframe['emotion_plutchik'].apply(get_reduced_label, args = (plutchik_equivalencies_wo_intensity,plutchik_emotions,dictionary))
-
-    dataframe = dataframe.drop(columns=['emotion_plutchik',emotion_column,emotion_column + "_encoded"])
-
-    dataframe = dataframe.rename(columns = {emotion_column+'_reduced_labels':emotion_column})
+    dataframe[emotion_column] = dataframe[emotion_column].apply(lambda x: dictionary[x])
 
 
     return dataframe

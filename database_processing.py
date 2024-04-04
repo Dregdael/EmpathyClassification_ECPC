@@ -325,33 +325,27 @@ def main():
     #get if mimicry is being done
     if control_vector[feature2number['emotion_mimicry']] == 1:
         print('getting mimicry.........')
-        if ((control_vector[6] == 1) or (control_vector[7] == 1) or (control_vector[8] == 1)):
-            #If there are already emotion labels, get mimicry if they speaker and listener have the same emotion
-            exchange_df = em_red.get_mimicry('speaker_emotion','listener_emotion',exchange_df)
-        else:
-            #if no emotion labels are being used, get mimicry through alternative means
-            if(control_vector[4] == 1):
-                #get the emotional distance and if it is less than 0.1 set mimicry to 1
-                print('No labels detected, obtaining mimicry through emotional distance using VAD....')
-                exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
-                exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
-                #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
-                #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)               
-                exchange_df = exchange_df.drop(columns = ['emotional_similarity'])
-                #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
-                #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)
-                #exchange_df = exchange_df.drop(columns=['emotional_distance'])
-            else: 
-                #Else, obtain the least amount of emotion labels possible and use that to get the mimicry
-                print('No VAD values , obtaining mimicry through emotional distance using newly created VAD....')
-                emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
-                #print('Annotating VAD values.....')
-                exchange_df = get_VAD_values_for_both(exchange_df)
-                exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
-                exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
-                #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
-                #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)               
-                exchange_df = exchange_df.drop(columns = ['valence_speaker','arousal_speaker','dominance_speaker','valence_listener','arousal_listener','dominance_listener','emotional_similarity'])
+        if(control_vector[4] == 1):
+            #get the emotional similarity, if it is more than 0.7 set mimicry to 1
+            print('No labels detected, obtaining mimicry through emotional distance using VAD....')
+            exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
+            exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
+            #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
+            #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)               
+            exchange_df = exchange_df.drop(columns = ['emotional_similarity'])
+            #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
+            #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)
+            #exchange_df = exchange_df.drop(columns=['emotional_distance'])
+        else: 
+            #Else, obtain the least amount of emotion labels possible and use that to get the mimicry
+            print('No VAD values , obtaining mimicry through emotional distance using newly created VAD....')
+            #print('Annotating VAD values.....')
+            exchange_df = get_VAD_values_for_both(exchange_df)
+            exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
+            exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
+            #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
+            #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)               
+            exchange_df = exchange_df.drop(columns = ['valence_speaker','arousal_speaker','dominance_speaker','valence_listener','arousal_listener','dominance_listener','emotional_similarity'])
         print('done')
     
     #reduce empathy labels
