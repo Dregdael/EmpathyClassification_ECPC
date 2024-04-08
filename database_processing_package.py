@@ -154,9 +154,9 @@ def modify_to_exchange_format(dataframe):
 
 def get_VAD_values_for_both(dataframe):
     #setup lexicon utilities
-    lexicon_df,wnl,stp_wrds = lexicon.setup_lexicon('classifiers/nrc_vad_lexicon/BipolarScale/NRC-VAD-Lexicon.txt')
-    dataframe['vad_speaker'] = dataframe['speaker_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds)) 
-    dataframe['vad_listener'] = dataframe['listener_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds)) 
+    lexicon_df,wnl,stp_wrds,spll = lexicon.setup_lexicon('classifiers/nrc_vad_lexicon/BipolarScale/NRC-VAD-Lexicon.txt')
+    dataframe['vad_speaker'] = dataframe['speaker_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds,spll)) 
+    dataframe['vad_listener'] = dataframe['listener_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds,spll)) 
     dataframe[['valence_speaker','arousal_speaker','dominance_speaker']] = pd.DataFrame(dataframe.vad_speaker.tolist(),index = dataframe.index)
     dataframe[['valence_listener','arousal_listener','dominance_listener']] = pd.DataFrame(dataframe.vad_listener.tolist(),index = dataframe.index)
     dataframe = dataframe.drop(columns = ['vad_speaker','vad_listener'])

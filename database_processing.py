@@ -183,12 +183,12 @@ def main():
                   1,    #epitome
                   1,    #vad lexicon
                   1,    #length
-                  1,    #emotion 32
+                  0,    #emotion 32
                   0,    #emotion 20
                   0,    #emotion 8
-                  0,    #emotion mimicry
-                  0,    #reduced_empathy_labels
-                  0     #exchange number in the conversation
+                  1,    #emotion mimicry
+                  1,    #reduced_empathy_labels
+                  1     #exchange number in the conversation
                   ]
     if control_vector[feature2number['database_to_classify']] == 0:
         database_to_process = 'EmpatheticConversations-EC'

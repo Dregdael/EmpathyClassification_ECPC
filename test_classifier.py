@@ -34,6 +34,20 @@ def score(predicted, y):
         return confusion, acc, auc
 
 
+def test_single_instance(model_path, data_test):
+    pbc = pickle.load(open(model_path, 'rb'))
+    data_test["empathy"] = data_test["empathy"].astype('int')
+    data_test["empathy"] = data_test["empathy"].astype('string')
+    x_test = data_test.drop(columns=['empathy'])
+    y_test = data_test.copy()
+    y_test = y_test.drop(columns=x_test.columns)
+    y_pred = pbc.predict(x_test)
+    for prediction in y_pred:
+        print(f"{prediction}")
+    return 0
+
+
+
 
 def test(experiment_number,data_test,model_path,features_used):
 

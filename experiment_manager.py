@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 73
+experiment_number = 76
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -36,7 +36,7 @@ train_database_dir = database_dir_ex
 #choose testing database
 test_database_dir = database_dir_ex
 #already trained model
-already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(25) + '/' + 'trained_pbc4cip.sav'
+already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(70) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
 reprocess_database = 1
 #automated processing flag 
@@ -45,7 +45,7 @@ auto_experiments = 0
 database_control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
                             1,#intent
                             1,#sentiment
-                            0,#epitome
+                            1,#epitome
                             1,#vad lexicon
                             1,#length
                             0,#emotion 32
@@ -66,20 +66,22 @@ feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epito
 
 if auto_experiments == 1:
     #select number of features to modify
-    number_of_features=5
+    number_of_features=4
     #create list of variations
     variation_lst = list(map(list, itertools.product([0, 1], repeat=number_of_features)))
     #control vectors that will be carried out automatically
     control_vector_list = []
     for i in list(variation_lst): 
         control_vector = [database_control_vector[0]]
-        control_vector = control_vector + i[:-1] #combination of four characteristics
-        control_vector.append(1) #have length
-        control_vector = control_vector + [0,0,0] #have no emotion labels
-        control_vector.append(i[-1]) #alternating mimicry
+        control_vector = [database_control_vector[1]]
+        control_vector = [database_control_vector[2]]
+        control_vector = [database_control_vector[3]] 
+        control_vector = [database_control_vector[4]]                               
+        control_vector = control_vector + i #feature changing
+        control_vector.append(database_control_vector[9]) #mimicry
         control_vector.append(database_control_vector[10]) #reduced empathy labels
-        control_vector_list.append(control_vector)
-        #print()
+        control_vector.append(database_control_vector[11]) #exchange_number
+        control_vector.append(database_control_vector[12]) #output processed dataframe       
     print('List of control vectors created, auto_experimentation is on.')
     print(f'Number of features that will vary: {number_of_features}')
     print(f'Following experiments will carried out: {experiment_number} to {experiment_number+len(control_vector_list)}')

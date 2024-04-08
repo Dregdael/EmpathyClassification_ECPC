@@ -12,19 +12,24 @@ from nltk.corpus import stopwords
 #To expand contractions
 #from pycontractions import Contractions
 #To get keywords
+from spellchecker import SpellChecker
 
 def clean_string(string2clean):
     string2clean = re.sub("_comma_", ',', string2clean)
     string2clean = re.sub("[^0-9a-zA-Z']+", ' ', string2clean)
     return string2clean.lower()
 
-def string2array(string2convert,stop_words):
+def string2array(string2convert,stop_words,spell):
+    
     arr = string2convert.split()
     for i in arr:
         if i in stop_words:
             arr.remove(i)
         if type(i) == 'int':
             arr.remove(i)
+    misspelled = spell.unknown(arr)
+    for word in misspelled:
+        spell.correction(word) 
     return arr
 
 def setup_lexicon(lex_dir):
@@ -34,16 +39,16 @@ def setup_lexicon(lex_dir):
     lexicon_df = lexicon_df.rename(columns={0:'word',1:'valence', 2:'arousal',3:'dominance'})
     wnl = WordNetLemmatizer()
     stop_words = stopwords.words('english')
+    spell = SpellChecker()
+    return lexicon_df,wnl,stop_words,spell
 
-    return lexicon_df,wnl,stop_words
-
-def get_avg_vad(str2process,lexicon_df,lmtzr,stp_wrds):
+def get_avg_vad(str2process,lexicon_df,lmtzr,stp_wrds,spell):
     valence = 0 
     arousal = 0
     dominance = 0
     words_in_lex = 0 
     clean_str = clean_string(str(str2process))
-    wrd_lst = string2array(clean_str,stp_wrds)
+    wrd_lst = string2array(clean_str,stp_wrds,spell)
     #print(wrd_lst)
     #print(wrd_lst)
     for word in wrd_lst:
