@@ -37,7 +37,7 @@ def classify_epitome_values(empathy_classifier,in_df):
         #epitome_df.loc[i] = [ids[i], seeker_posts[i], response_posts[i], predictions_ER[0], predictions_IP[0], predictions_EX[0], predictions_rationale_ER[0].tolist(), predictions_rationale_IP[0].tolist(), predictions_rationale_EX[0].tolist()]
         epitome_df.loc[i, 'predictions_ER'] = predictions_ER[0]
         epitome_df.loc[i, 'predictions_IP'] = predictions_IP[0]
-        #epitome_df.loc[i, 'predictions_EX'] = predictions_EX[0]
+        epitome_df.loc[i, 'predictions_EX'] = predictions_EX[0]
     #print(epitome_df)
     return epitome_df   
 
