@@ -21,6 +21,9 @@ from sklearn.model_selection import train_test_split
 #emotion
 from classifiers.course_grained_emotion import pretrained_32emotions as em32
 from classifiers.course_grained_emotion import emotion_reductor as em_red
+import contractions
+
+
 
 emotion_dictionary = {0: 'afraid', 1: 'angry', 2: 'annoyed', 3: 'anticipating', 4: 'anxious', 5: 'apprehensive', 6: 'ashamed', 7: 'caring', 8: 'confident', 9: 'content', 
  10: 'devastated', 11: 'disappointed', 12: 'disgusted', 13: 'embarrassed', 14: 'excited', 15: 'faithful', 16: 'furious', 17: 'grateful', 18: 'guilty', 
@@ -28,6 +31,17 @@ emotion_dictionary = {0: 'afraid', 1: 'angry', 2: 'annoyed', 3: 'anticipating', 
  29: 'surprised', 30: 'terrified', 31: 'trusting'}
 intent_labels = ['agreeing','acknowledging','encouraging','consoling','sympathizing','suggesting','questioning','wishing','neutral']
 
+
+
+def expand_contractions(text):
+    if "'" in str(text):
+        expanded_words = []    
+        for word in text.split():
+            expanded_words.append(contractions.fix(word))   
+        expanded_text = ' '.join(expanded_words)
+        return str(expanded_text)
+    else: 
+        return str(text)
 
 
 def get_emp_intent(dataframe_row,mdl,tokenzr,dev):
@@ -154,9 +168,9 @@ def modify_to_exchange_format(dataframe):
 
 def get_VAD_values_for_both(dataframe):
     #setup lexicon utilities
-    lexicon_df,wnl,stp_wrds,spll = lexicon.setup_lexicon('classifiers/nrc_vad_lexicon/BipolarScale/NRC-VAD-Lexicon.txt')
-    dataframe['vad_speaker'] = dataframe['speaker_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds,spll)) 
-    dataframe['vad_listener'] = dataframe['listener_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds,spll)) 
+    lexicon_df,wnl,stp_wrds = lexicon.setup_lexicon('classifiers/nrc_vad_lexicon/BipolarScale/NRC-VAD-Lexicon.txt')
+    dataframe['vad_speaker'] = dataframe['speaker_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds)) 
+    dataframe['vad_listener'] = dataframe['listener_utterance'].apply(lexicon.get_avg_vad, args = (lexicon_df,wnl,stp_wrds)) 
     dataframe[['valence_speaker','arousal_speaker','dominance_speaker']] = pd.DataFrame(dataframe.vad_speaker.tolist(),index = dataframe.index)
     dataframe[['valence_listener','arousal_listener','dominance_listener']] = pd.DataFrame(dataframe.vad_listener.tolist(),index = dataframe.index)
     dataframe = dataframe.drop(columns = ['vad_speaker','vad_listener'])
@@ -245,6 +259,9 @@ def process_database(control_vector):
     #This is to test with a small dataframe
     #df = df.loc[0:200]
 
+    print('Expanding contractions....')
+    df['utterance'] = df['utterance'].apply(expand_contractions)
+    print('done')
 
     #get empathetic intent
     if control_vector[feature2number['intent']] == 1:

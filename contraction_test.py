@@ -16,6 +16,7 @@ for word in text.split():
   # using contractions.fix to expand the shortened words
   expanded_words.append(contractions.fix(word))   
    
+print(expanded_words)
 expanded_text = ' '.join(expanded_words)
 print('Original text: ' + text)
 print('Expanded_text: ' + expanded_text)

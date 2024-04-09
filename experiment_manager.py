@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 76
+experiment_number = 77
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database

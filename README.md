@@ -8,17 +8,8 @@ Current implementation requires manually modifying parameters through each stage
 
 To use the code in this repository it is necessary to:
 
-1. Train the intent classifier in '/classifiers/empathetic_intent' by running train.py
-2. Train the EPITOME classifier by running 'classifiers/EPITOME/train.py'
-3. Select the database to use in database_processing.py 
-4. Process the database by running database_processing.py
-5. Train the model by running train_classifier.py
-6. Test the model by running test_classifier.py
-7. Get the results, patterns, model, and predictions from the database processed folder and move them to the experiments folder to a new folder called 'outputs' 
-
-To do:
-
-1. Streamline the experiment process.
-2. Train new emotion classifier with less labels. 
-3. Modify PBC4cip implementation to accelerate training. 
-
+1. Setup a virtual conda environment using the environment.yml file. 
+2. Train the intent classifier by running '/classifiers/empathetic_intent/train.py' This classifier gives a probability distribution that the response contains one of 8 empathetic intent categories, or a neutral class. 
+3. Train the EPITOME classifier by running 'classifiers/EPITOME/train.py' This classifier marks whether there are certain communication mechanisms in the utterances. These mechanisms are related to empathy.
+4. Use the experiment_managet.py file to select which features for the database, which database you want to use, and the classification algorithm's properties. This file must be used to obtain a trained model. 
+5. Use the jupyter notebook demo to carry out empathy classification in a scenario of your choosing. It is necessary to specify the location of your trained model. 
