@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 77
+experiment_number = 82
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -54,13 +54,14 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
                             1,#emotion mimicry
                             1,#reduced empathy labels
                             1, #exchange number
-                            1 #output processed database
+                            1, #output processed database
+                            1 #7 emotion labels
                             ]
 
 
-control_vector_dictionary = {0:'database_to_classify', 1: 'intent', 2:'sentiment', 3:'EPITOME Mechanisms', 4:'VAD vectors', 5: 'Length of utterances', 6: '32 emotion labels', 7:'20 emotion labels', 8: '8 emotion labels', 9: 'emotion mimicry', 10: 'Reduced empathy labels', 11: 'exchange number', 12: 'output'}
+control_vector_dictionary = {0:'database_to_classify', 1: 'intent', 2:'sentiment', 3:'EPITOME Mechanisms', 4:'VAD vectors', 5: 'Length of utterances', 6: '32 emotion labels', 7:'20 emotion labels', 8: '8 emotion labels', 9: 'emotion mimicry', 10: 'Reduced empathy labels', 11: 'exchange number', 12: 'output', 13: '7_emotion_labels'}
 
-feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10, 'exchange_number' : 11, 'output' : 12}
+feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10, 'exchange_number' : 11, 'output' : 12,'7_emotion_labels': 13}
 
 #print(database_control_vector[feature2number['exchange_number']])
 

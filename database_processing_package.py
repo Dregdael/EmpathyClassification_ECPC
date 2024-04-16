@@ -20,8 +20,11 @@ from classifiers.nrc_vad_lexicon import lexicon_analysis as lexicon
 from sklearn.model_selection import train_test_split
 #emotion
 from classifiers.course_grained_emotion import pretrained_32emotions as em32
+from classifiers.course_grained_emotion import pretrained_7emotions as em7
 from classifiers.course_grained_emotion import emotion_reductor as em_red
 import contractions
+from spellchecker import SpellChecker
+import regex
 
 
 
@@ -31,6 +34,7 @@ emotion_dictionary = {0: 'afraid', 1: 'angry', 2: 'annoyed', 3: 'anticipating', 
  29: 'surprised', 30: 'terrified', 31: 'trusting'}
 intent_labels = ['agreeing','acknowledging','encouraging','consoling','sympathizing','suggesting','questioning','wishing','neutral']
 
+ekman_emo_dic = {0:'anger', 1: 'disgust', 2: 'fear', 3: 'joy', 4: 'neutral', 5: 'sadness', 6: 'surprise' }
 
 
 def expand_contractions(text):
@@ -42,6 +46,28 @@ def expand_contractions(text):
         return str(expanded_text)
     else: 
         return str(text)
+
+def clean_string(text, spell):
+    punc_re = regex.compile(r'(\p{Punctuation})')    
+    text = str(text)
+    text = re.sub("_comma_", ',', text)
+    text = re.sub("[^0-9a-zA-Z?!,.]+", ' ', text)
+    text = text.lower()
+    arr = punc_re.split(text)
+    #print(arr)
+    for i in range(len(arr)):
+      sub = arr[i].split()
+      misspelled = spell.unknown(sub)
+      for j in range(len(sub)):
+        if sub[j] in misspelled:
+          #print(f'mispelled {arr2[j]}')
+          if spell.correction(sub[j]) != None:
+              sub[j] = spell.correction(sub[j]) 
+        arr[i] = ' '.join(sub)
+      clean_text = ' '.join(arr)
+      clean_text = re.sub(' +', ' ',clean_text)
+    return clean_text
+
 
 
 def get_emp_intent(dataframe_row,mdl,tokenzr,dev):
@@ -80,6 +106,12 @@ def get_emotion_label(dataframe_row,mdl,tokenzr,utt_column):
     #get the one emotion label out of 32 for a text utterance
     emotion_lst = em32.get_emotion_32(str(dataframe_row[utt_column]),mdl,tokenzr)
     label = emotion_dictionary[np.argmax(emotion_lst)]
+    return label
+
+def get_emotion_label_7(dataframe_row,mdl,tokenzr,utt_column):
+    #get the one emotion label out of 32 for a text utterance
+    emotion_lst = em7.get_emotion_7(str(dataframe_row[utt_column]),mdl,tokenzr)
+    label = ekman_emo_dic[np.argmax(emotion_lst)]
     return label
 
 def get_word_len(utterance):
@@ -191,7 +223,9 @@ def get_cosine_similarity(dataframe_row):
 def process_database(control_vector):
     print('Starting database processing!')
     #dictionary to obtain position in binary control vector using the feature of interest
-    feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,'20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10, 'exchange_number' : 11, 'output':12}
+    feature2number = {'database_to_classify':0,'intent' : 1, 'sentiment' : 2, 'epitome':3, 'VAD_vectors':4, 'utterance_length':5, '32_emotion_labels':6,
+                      '20_emotion_labels':7, '8_emotion_labels':8, 'emotion_mimicry':9, 'Reduce_empathy_labels':10, 'exchange_number' : 11, 
+                      'output':12,'7_emotion_labels': 13}
 
 
     '''
@@ -263,6 +297,12 @@ def process_database(control_vector):
     df['utterance'] = df['utterance'].apply(expand_contractions)
     print('done')
 
+    spellcheck = SpellChecker()
+
+    #print('Cleaning string....')
+    #df['utterance'] = df['utterance'].apply(clean_string, args=(spellcheck,))
+    #print('done')
+
     #get empathetic intent
     if control_vector[feature2number['intent']] == 1:
         print('getting intent....')
@@ -296,7 +336,7 @@ def process_database(control_vector):
     if control_vector[feature2number['epitome']] == 1:
         print('getting EPITOME mechanisms....')
         exchange_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',exchange_df)
-        exchange_df = exchange_df.drop(columns=['predictions_EX'])
+        #exchange_df = exchange_df.drop(columns=['predictions_EX'])
         print('done')
 
     #Annotate Valence, Arousal, and Dominance for the speaker and listener utterances.
@@ -351,33 +391,22 @@ def process_database(control_vector):
     #get if mimicry is being done
     if control_vector[feature2number['emotion_mimicry']] == 1:
         print('getting mimicry.........')
-        if ((control_vector[6] == 1) or (control_vector[7] == 1) or (control_vector[8] == 1)):
-            #If there are already emotion labels, get mimicry if they speaker and listener have the same emotion
-            exchange_df = em_red.get_mimicry('speaker_emotion','listener_emotion',exchange_df)
-        else:
             #if no emotion labels are being used, get mimicry through alternative means
-            if(control_vector[4] == 1):
-                #get the emotional distance and if it is less than 0.1 set mimicry to 1
-                print('No labels detected, obtaining mimicry through emotional distance using VAD....')
-                exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
-                exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
-                #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
-                #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)               
-                exchange_df = exchange_df.drop(columns = ['emotional_similarity'])
-                #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
-                #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)
-                #exchange_df = exchange_df.drop(columns=['emotional_distance'])
-            else: 
-                #Else, obtain the least amount of emotion labels possible and use that to get the mimicry
-                print('No VAD values , obtaining mimicry through emotional distance using newly created VAD....')
-                emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
-                #print('Annotating VAD values.....')
-                exchange_df = get_VAD_values_for_both(exchange_df)
-                exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
-                exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
-                #exchange_df['emotional_distance'] = exchange_df.apply(lambda x:  math.sqrt(math.pow(x['valence_speaker'] - x['valence_speaker'],2)+math.pow(x['arousal_speaker'] - x['arousal_listener'],2)+math.pow(x['dominance_speaker'] - x['dominance_listener'],2))/math.sqrt(12), axis = 1)
-                #exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_distance'] < 0.1 else 0, axis = 1)               
-                exchange_df = exchange_df.drop(columns = ['valence_speaker','arousal_speaker','dominance_speaker','valence_listener','arousal_listener','dominance_listener','emotional_similarity'])
+        if(control_vector[4] == 1):
+            #get the emotional distance and if it is less than 0.1 set mimicry to 1
+            print('Obtaining mimicry through emotional distance using VAD....')
+            exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
+            exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
+            exchange_df = exchange_df.drop(columns = ['emotional_similarity'])
+        else: 
+            #Else, obtain the least amount of emotion labels possible and use that to get the mimicry
+            print('No VAD values , obtaining mimicry through emotional distance using newly created VAD....')
+            emo32_model, emo32_tokenzr = em32.load32EmotionsModel() #get model and tokenizer
+            #print('Annotating VAD values.....')
+            exchange_df = get_VAD_values_for_both(exchange_df)
+            exchange_df['emotional_similarity'] = exchange_df.apply(get_cosine_similarity,axis = 1) #obtain cosine similarity between valence and arousal vector
+            exchange_df['mimicry'] = exchange_df.apply(lambda x: 1 if x['emotional_similarity'] > 0.7 else 0, axis = 1)
+            exchange_df = exchange_df.drop(columns = ['valence_speaker','arousal_speaker','dominance_speaker','valence_listener','arousal_listener','dominance_listener','emotional_similarity'])
         print('done')
     
     #reduce empathy labels
@@ -395,6 +424,14 @@ def process_database(control_vector):
     else: 
         print('Keeping exchange number')
 
+    #get 32 course-grained-emotion labels
+    if control_vector[feature2number['7_emotion_labels']] == 1:      
+        print('getting 7 emotion labels.....')
+        emo7_model, emo7_tokenzr = em7.load7EmotionsModel() #get model and tokenizer
+        exchange_df['speaker_emotion'] = exchange_df.apply(get_emotion_label_7,axis = 1, args = (emo7_model,emo7_tokenzr,'speaker_utterance')) #apply emotion label extraction to speaker
+        exchange_df['listener_emotion'] = exchange_df.apply(get_emotion_label_7,axis = 1, args = (emo7_model,emo7_tokenzr,'listener_utterance')) #apply emotion label extraction to listener
+        #reduce number of emotion labels
+        print('done')
 
 
     if control_vector[feature2number['output']] == 1:
