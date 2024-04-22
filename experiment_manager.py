@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 82
+experiment_number = 87
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -36,7 +36,7 @@ train_database_dir = database_dir_ex
 #choose testing database
 test_database_dir = database_dir_ex
 #already trained model
-already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(70) + '/' + 'trained_pbc4cip.sav'
+already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(75) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
 reprocess_database = 1
 #automated processing flag 
@@ -55,7 +55,7 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
                             1,#reduced empathy labels
                             1, #exchange number
                             1, #output processed database
-                            1 #7 emotion labels
+                            0 #7 emotion labels
                             ]
 
 
@@ -131,6 +131,8 @@ for control_vector in control_vector_list:
             data_processer.process_database(control_vector)
             control_vector[0] = 1
             data_processer.process_database(control_vector)
+    else:
+        print('No database reprocessing selected, carrying out with database in the "processed databases" folder ')
 
     print('')
 

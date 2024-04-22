@@ -5,3 +5,5 @@
 /classifiers/epitome_mechanisms/trained_models/*
 /Experiments/outputs/*
 bert_classifier.pth
+bert_classifier_3_levels.pth
+bert_classifier_5_levels.pth

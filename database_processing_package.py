@@ -336,7 +336,7 @@ def process_database(control_vector):
     if control_vector[feature2number['epitome']] == 1:
         print('getting EPITOME mechanisms....')
         exchange_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',exchange_df)
-        #exchange_df = exchange_df.drop(columns=['predictions_EX'])
+        exchange_df = exchange_df.drop(columns=['predictions_EX'])
         print('done')
 
     #Annotate Valence, Arousal, and Dominance for the speaker and listener utterances.
@@ -391,7 +391,6 @@ def process_database(control_vector):
     #get if mimicry is being done
     if control_vector[feature2number['emotion_mimicry']] == 1:
         print('getting mimicry.........')
-            #if no emotion labels are being used, get mimicry through alternative means
         if(control_vector[4] == 1):
             #get the emotional distance and if it is less than 0.1 set mimicry to 1
             print('Obtaining mimicry through emotional distance using VAD....')
