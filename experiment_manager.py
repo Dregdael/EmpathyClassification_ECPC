@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 87
+experiment_number = 88
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -48,11 +48,11 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
                             1,#epitome
                             1,#vad lexicon
                             1,#length
-                            0,#emotion 32
+                            1,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
                             1,#emotion mimicry
-                            1,#reduced empathy labels
+                            0,#reduced empathy labels
                             1, #exchange number
                             1, #output processed database
                             0 #7 emotion labels
