@@ -42,7 +42,7 @@ plutchik_equivalencies = [[[0,0,1,0,0,0,0,0],2], #afraid
                           [[0,0,0,1,1,1,0,0],1], #devastated
                           [[0,0,0,1,1,0,0,0],2], #disappointed
                           [[0,0,0,0,0,1,0,0],2], #disgusted
-                          [[0,0,1,0,0,1,0,0],3], #embarassed
+                          [[0,0,1,0,0,1,0,0],3], #embarrassed
                           [[1,0,0,0,0,0,0,1],3], #excited
                           [[1,1,0,1,0,0,0,0],1], #faithful
                           [[0,0,0,0,0,0,1,0],1], #furious

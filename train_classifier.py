@@ -20,7 +20,7 @@ def train(experiment_number,data_train):
     current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-    pbc = PBC4cip(tree_count = 100,filtering=False, multivariate = False) # create classifier with custom tree count
+    pbc = PBC4cip(tree_count = 150,filtering=False, multivariate = False) # create classifier with custom tree count
  
  
     #data_train = pd.read_csv(trainFile)

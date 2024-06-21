@@ -12,7 +12,7 @@ logging.disable(logging.WARNING)
 def main():
     print('Getting predictions....')
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    predictions_dir = '/Experiments/outputs/Experiment 87/'
+    predictions_dir = '/Experiments/outputs/Experiment 90/'
     predictions_file = 'predictions.txt'
     preds_pbc = pd.read_csv(current_dir + predictions_dir + predictions_file, sep=" ", header=None)
     preds_pbc = preds_pbc.rename(columns={preds_pbc.columns[0]: "pred_val"})
@@ -32,14 +32,12 @@ def main():
 
     print('Actual labels')
     train_database_dir = '/processed_databases/EmpatheticExchanges/'
-    testFile = current_dir + train_database_dir + 'EmpatheticExchanges_test.csv'
+    testFile = current_dir + train_database_dir + 'EmpatheticExchanges_test_3.csv'
     df_test = pd.read_csv(testFile)
     df_test['empathy'] = df_test['empathy'].astype('int')
     print(df_test['empathy'].iloc[:5])
 
-    y_true = [0, 1, 2, 0, 1, 2]
-    y_pred = [0, 2, 1, 0, 0, 1]
-    
+
     print('PBC f1 score')
     print(f1_score(df_test['empathy'], preds_pbc['pred_val'], average='weighted'))
     print('BERT f1 score')

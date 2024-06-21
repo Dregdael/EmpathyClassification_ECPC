@@ -98,9 +98,13 @@ def evaluate(model, data_loader, device):
 
 def main():
     print('Testing BERT model')
+    num_classes = 3
+    print(f'Num of classes: {num_classes}')
+
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     train_database_dir = '/processed_databases/EmpatheticExchanges/'
-    testFile = current_dir + train_database_dir + 'EmpatheticExchanges_test.csv'
+    testFile = current_dir + train_database_dir + 'EmpatheticExchanges_test_'+str(num_classes)+'.csv'
     df_test = pd.read_csv(testFile)
 
     x_test = df_test.drop(columns=['empathy'])
@@ -114,7 +118,7 @@ def main():
     test_utt_1, test_utt_2, test_labels = load_exchange_data(df_test,label_array)
 
     bert_model_name = 'bert-base-uncased'
-    num_classes = 3
+
     max_length = 120
     batch_size = 16
 
@@ -123,7 +127,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = BERTClassifier(bert_model_name, num_classes).to(device)
-    model.load_state_dict(torch.load(current_dir+'/bert_classifier_3_levels.pth'))
+    model.load_state_dict(torch.load(current_dir+'/bert_classifier_'+str(num_classes)+'_levels.pth'))
     print(device)
 
     test_dataset = TextClassificationDataset(test_utt_1, test_utt_2, test_labels, tokenizer, max_length)
@@ -133,11 +137,11 @@ def main():
     print(report)
     print(f"Closeness Evaluation Measure: {cem:.4f}")
 
-    with open(current_dir +'/' + "BERT_results_3.txt", "w") as f:
+    with open(current_dir +'/' + "BERT_results_"+str(num_classes)+".txt", "w") as f:
         print('Metrics', file = f)
         print(f"\n\nacc: {accuracy}, cem: {cem}", file=f)
 
-    with open(current_dir +'/' + "BERT_predictions_3.txt", "w") as f:
+    with open(current_dir +'/' + "BERT_predictions_"+str(num_classes)+".txt", "w") as f:
         for prediction in test_predictions:
             print(f"{prediction}",file=f)
 

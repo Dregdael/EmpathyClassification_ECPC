@@ -112,7 +112,6 @@ def evaluate(model, data_loader, device):
             attention_mask = batch['attention_mask'].to(device)
             labels = batch['label'].to(device)
             outputs = model(input_ids=input_ids, attention_mask=attention_mask)
-            print(outputs)
             _, preds = torch.max(outputs, dim=1)
             predictions.extend(preds.cpu().tolist())
             actual_labels.extend(labels.cpu().tolist())
@@ -125,6 +124,7 @@ def evaluate(model, data_loader, device):
 
 
 def main():
+
     print('Training BERT model')
     current_dir = os.path.dirname(os.path.abspath(__file__))
     train_database_dir = '/processed_databases/EmpatheticExchanges/'

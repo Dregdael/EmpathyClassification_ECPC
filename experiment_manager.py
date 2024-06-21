@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 88
+experiment_number = 104
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -36,7 +36,7 @@ train_database_dir = database_dir_ex
 #choose testing database
 test_database_dir = database_dir_ex
 #already trained model
-already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(75) + '/' + 'trained_pbc4cip.sav'
+already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(88) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
 reprocess_database = 1
 #automated processing flag 
@@ -48,12 +48,12 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
                             1,#epitome
                             1,#vad lexicon
                             1,#length
-                            1,#emotion 32
+                            0,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
                             1,#emotion mimicry
-                            0,#reduced empathy labels
-                            1, #exchange number
+                            1,#reduced empathy labels
+                            0, #exchange number
                             1, #output processed database
                             0 #7 emotion labels
                             ]
@@ -151,6 +151,13 @@ for control_vector in control_vector_list:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         trainFile = current_dir + train_database_dir + 'train.csv'
         data_train = pd.read_csv(trainFile)
+
+
+        data_train = data_train.drop(columns=['predictions_EX'])
+        data_train = data_train.drop(columns=['predictions_IP'])
+        #data_train = data_train.drop(columns=['predictions_ER'])
+
+
         data_train["empathy"] = data_train["empathy"].astype('int')
         data_train["empathy"] = data_train["empathy"].astype('string')
         if control_vector[feature2number['emotion_mimicry']] == 1:
@@ -171,10 +178,18 @@ for control_vector in control_vector_list:
     #read test dataframe
     data_test = pd.read_csv(testFile)
 
+    data_test = data_test.drop(columns=['predictions_EX'])
+    data_test = data_test.drop(columns=['predictions_IP'])
+    #data_test = data_test.drop(columns=['predictions_ER'])
+
+
+
 
     #Print features of the dataframe used for testing
     print(f'Features from the testing database')
     print(data_test.columns)
+
+
 
     #Print ho wmany datapoints 
     print(f'Number of datapoints in testing database: {len(data_test)}')

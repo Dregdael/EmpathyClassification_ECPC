@@ -337,6 +337,8 @@ def process_database(control_vector):
         print('getting EPITOME mechanisms....')
         exchange_df = epitome.predict_epitome_values('classifiers/epitome_mechanisms/trained_models',exchange_df)
         #exchange_df = exchange_df.drop(columns=['predictions_EX'])
+        #exchange_df = exchange_df.drop(columns=['predictions_IP'])
+        #exchange_df = exchange_df.drop(columns=['predictions_EM'])
         print('done')
 
     #Annotate Valence, Arousal, and Dominance for the speaker and listener utterances.
