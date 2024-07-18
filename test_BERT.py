@@ -17,6 +17,7 @@ from PBC4cip.core.Evaluation import obtainAUCMulticlass
 from PBC4cip.core.Helpers import get_col_dist, get_idx_val
 import logging
 logging.disable(logging.WARNING)
+import argparse
 
 
 
@@ -96,15 +97,15 @@ def evaluate(model, data_loader, device):
 
 
 
-def main():
+def main(model_pth, num_classes):
     print('Testing BERT model')
-    num_classes = 3
+    print(model_pth)
     print(f'Num of classes: {num_classes}')
 
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     train_database_dir = '/processed_databases/EmpatheticExchanges/'
-    testFile = current_dir + train_database_dir + 'EmpatheticExchanges_test_'+str(num_classes)+'.csv'
+    testFile = current_dir + train_database_dir + 'EmpatheticExchanges_test.csv'
     df_test = pd.read_csv(testFile)
 
     x_test = df_test.drop(columns=['empathy'])
@@ -127,7 +128,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = BERTClassifier(bert_model_name, num_classes).to(device)
-    model.load_state_dict(torch.load(current_dir+'/bert_classifier_'+str(num_classes)+'_levels.pth'))
+    model.load_state_dict(torch.load(current_dir+'/'+model_pth))
     print(device)
 
     test_dataset = TextClassificationDataset(test_utt_1, test_utt_2, test_labels, tokenizer, max_length)
@@ -137,11 +138,11 @@ def main():
     print(report)
     print(f"Closeness Evaluation Measure: {cem:.4f}")
 
-    with open(current_dir +'/' + "BERT_results_"+str(num_classes)+".txt", "w") as f:
+    with open(current_dir +'/BERT_results/' + "BERT_results_"+str(model_pth)[:-4]+".txt", "w") as f:
         print('Metrics', file = f)
         print(f"\n\nacc: {accuracy}, cem: {cem}", file=f)
 
-    with open(current_dir +'/' + "BERT_predictions_"+str(num_classes)+".txt", "w") as f:
+    with open(current_dir +'/BERT_results/' + "BERT_predictions_"+str(model_pth)[:-4]+".txt", "w") as f:
         for prediction in test_predictions:
             print(f"{prediction}",file=f)
 
@@ -151,4 +152,10 @@ def main():
 
 if __name__ == '__main__':
 
-    main()
+    parser = argparse.ArgumentParser(description='Test a BERT-based classification algorithm')
+    parser.add_argument('--model', metavar='model', required=True,
+                        help="State dictionary of the model to test (including the .pth). Example = bert_classifier_3_levels.pth")
+    parser.add_argument('--num_of_classes', metavar='model', required=True,
+                        help='number of class labels')
+    args = parser.parse_args()
+    main(str(args.model), int(args.num_of_classes))
