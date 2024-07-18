@@ -96,7 +96,7 @@ def fill_dataframe(dataframe):
     current_evaluation = 0
     current_prompt = ''
     for i in range(len(dataframe)):
-        if (str(dataframe.loc[i, 'conv_id']) != 'nan') and (str(dataframe.loc[i, 'context']) != 'nan') and (str(dataframe.loc[i, 'prompt']) != 'nan'):
+        if (str(dataframe.loc[i, 'conv_id']) != 'nan') and (str(dataframe.loc[i, 'context']) != 'nan') and (str(dataframe.loc[i, 'prompt']) != 'nan') and (str(dataframe.loc[i, 'conv_id']) != ' ') and (str(dataframe.loc[i, 'context']) != ' ') and (str(dataframe.loc[i, 'prompt']) != ' '):
             dataframe.loc[i, 'utterance_idx'] = 1
             utt_idx = 1
             current_conv_id = dataframe.loc[i, 'conv_id']
@@ -221,6 +221,7 @@ def main():
         if len(df[df['evaluation'].isin([1,2,3,4,5]) == False]) > 0:
             print('Error: Database contains bad evaluations, manually check the following conversations')
             print(df[df['evaluation'].isin([1,2,3,4,5]) == False])
+            print(len(df))
             exit(1)
         df = df.rename(columns={"evaluation": "empathy"})
     else:
@@ -235,7 +236,7 @@ def main():
         print('done')
       
     #This is to test with a small dataframe
-    df = df.loc[0:200]
+    #df = df.loc[0:200]
 
 
     #get empathetic intent

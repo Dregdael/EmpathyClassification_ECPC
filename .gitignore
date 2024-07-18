@@ -7,3 +7,5 @@
 bert_classifier.pth
 bert_classifier_3_levels.pth
 bert_classifier_5_levels.pth
+bert_classifier_2_levels.pth
+bert_classifier_3_extendeddatabase.pth

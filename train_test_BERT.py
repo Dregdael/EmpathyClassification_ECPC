@@ -153,7 +153,7 @@ def main():
     valid_utt_1, valid_utt_2, valid_labels = load_exchange_data(df_valid,label_array)
 
     bert_model_name = 'bert-base-uncased'
-    num_classes = 5
+    num_classes = 3
     max_length = 120
     batch_size = 16
     num_epochs = 150
@@ -181,7 +181,7 @@ def main():
         print(report)
         print(f"Closeness Evaluation Measure: {cem:.4f}")
 
-    torch.save(model.state_dict(), "bert_classifier.pth")
+    torch.save(model.state_dict(), "bert_classifier_3_extendeddatabase.pth")
     test_dataset = TextClassificationDataset(test_utt_1, test_utt_2, test_labels, tokenizer, max_length)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     accuracy, report, cem, test_predictions = evaluate(model, test_dataloader, device)
@@ -191,7 +191,7 @@ def main():
 
 
 
-    with open(current_dir + "results_BERT.txt", "w") as f:
+    with open(current_dir + "BERT_results_3_extended.txt", "w") as f:
         print('Predictions', file = f)
         for prediction in test_predictions:
             print(f"{prediction}",file=f)

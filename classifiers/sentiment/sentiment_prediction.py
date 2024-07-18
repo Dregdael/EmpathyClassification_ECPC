@@ -15,7 +15,7 @@ def loadSentimentModel():
 
 def get_sentiment(text, model,tokenizer):
     #negative, positive, neural
-    encoded_input = tokenizer(text, return_tensors='pt')
+    encoded_input = tokenizer(text, return_tensors='pt', max_length = 514, truncation = True)
     output = model(**encoded_input)
     scores = output[0][0].detach().numpy()
     scores = softmax(scores)

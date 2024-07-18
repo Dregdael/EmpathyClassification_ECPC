@@ -143,7 +143,7 @@ def fill_dataframe(dataframe):
     current_evaluation = 0
     current_prompt = ''
     for i in range(len(dataframe)):
-        if (str(dataframe.loc[i, 'conv_id']) != 'nan') and (str(dataframe.loc[i, 'context']) != 'nan') and (str(dataframe.loc[i, 'prompt']) != 'nan'):
+        if (str(dataframe.loc[i, 'conv_id']) != 'nan') and (str(dataframe.loc[i, 'context']) != 'nan') and (str(dataframe.loc[i, 'prompt']) != 'nan') and (str(dataframe.loc[i, 'conv_id']) != ' ') and (str(dataframe.loc[i, 'context']) != ' ') and (str(dataframe.loc[i, 'prompt']) != ' '):
             dataframe.loc[i, 'utterance_idx'] = 1
             utt_idx = 1
             current_conv_id = dataframe.loc[i, 'conv_id']
@@ -266,6 +266,7 @@ def process_database(control_vector):
     #get all datasets, process them, and join them
         print('reading datasets....')
         for file in file_list:
+            #print(file)
             temp_df = pd.read_excel(dataSubDir+file, engine="odf")
             #set up from format given to evaluators to full dataframe
             temp_df = fill_dataframe(temp_df)

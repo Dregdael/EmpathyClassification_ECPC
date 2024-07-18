@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 104
+experiment_number = 111
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -38,7 +38,7 @@ test_database_dir = database_dir_ex
 #already trained model
 already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(88) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
-reprocess_database = 1
+reprocess_database = 0
 #automated processing flag 
 auto_experiments = 0
 #control vector for database processing
@@ -151,13 +151,6 @@ for control_vector in control_vector_list:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         trainFile = current_dir + train_database_dir + 'train.csv'
         data_train = pd.read_csv(trainFile)
-
-
-        data_train = data_train.drop(columns=['predictions_EX'])
-        data_train = data_train.drop(columns=['predictions_IP'])
-        #data_train = data_train.drop(columns=['predictions_ER'])
-
-
         data_train["empathy"] = data_train["empathy"].astype('int')
         data_train["empathy"] = data_train["empathy"].astype('string')
         if control_vector[feature2number['emotion_mimicry']] == 1:
@@ -177,12 +170,27 @@ for control_vector in control_vector_list:
     testFile = current_dir + test_database_dir + 'test.csv'
     #read test dataframe
     data_test = pd.read_csv(testFile)
+    
+    #get rid of dominance
+    data_train = data_train.drop(columns=['dominance_speaker'])
+    data_train = data_train.drop(columns=['dominance_listener'])
+    #empathy to binary
+    #data_train['empathy_red'] = data_train.apply(lambda x: 2 if (x['empathy'] == 3 or x['empathy'] == 2)  else 1, axis = 1)
+    #data_train = data_train.drop(columns=['empathy'])
+    #data_train = data_train.rename(columns={"empathy_red": "empathy"})
 
-    data_test = data_test.drop(columns=['predictions_EX'])
-    data_test = data_test.drop(columns=['predictions_IP'])
-    #data_test = data_test.drop(columns=['predictions_ER'])
-
-
+    data_train = data_train.drop(columns=['predictions_EX'])
+    data_train = data_train.drop(columns=['predictions_IP'])
+    #data_train = data_train.drop(columns=['predictions_ER'])
+    
+    #get rid of dominance
+    data_test = data_test.drop(columns=['dominance_speaker'])
+    data_test = data_test.drop(columns=['dominance_listener'])
+    
+    #empathy to binary
+    #data_test['empathy_red'] = data_test.apply(lambda x: 2 if (x['empathy'] == 3 or x['empathy'] == 2)  else 1, axis = 1)
+    #data_test = data_test.drop(columns=['empathy'])
+    #data_test = data_test.rename(columns={"empathy_red": "empathy"})
 
 
     #Print features of the dataframe used for testing
