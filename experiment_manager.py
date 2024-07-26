@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 111
+experiment_number = 113
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -38,7 +38,7 @@ test_database_dir = database_dir_ex
 #already trained model
 already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(88) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
-reprocess_database = 0
+reprocess_database = 1
 #automated processing flag 
 auto_experiments = 0
 #control vector for database processing
@@ -52,7 +52,7 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
                             0,#emotion 20
                             0,#emotion 8
                             1,#emotion mimicry
-                            1,#reduced empathy labels
+                            0,#reduced empathy labels
                             0, #exchange number
                             1, #output processed database
                             0 #7 emotion labels
@@ -159,6 +159,24 @@ for control_vector in control_vector_list:
         if (control_vector[feature2number['32_emotion_labels']] == 1) or (control_vector[feature2number['20_emotion_labels']] == 1) or (control_vector[feature2number['8_emotion_labels']] == 1) :
             data_train['speaker_emotion'] = data_train['speaker_emotion'].astype('category')
             data_train['listener_emotion'] = data_train['listener_emotion'].astype('category')
+
+
+        #modify features last minute
+        data_train = data_train.drop(columns=['dominance_speaker'])
+        data_train = data_train.drop(columns=['dominance_listener'])
+        data_train = data_train.drop(columns=['predictions_EX'])
+        data_train = data_train.drop(columns=['predictions_IP'])
+
+
+
+        data_train['empathy_red'] = data_train.apply(lambda x: 1 if (x['empathy'] == 2 or x['empathy'] == 1)  else 2, axis = 1)
+        data_train = data_train.drop(columns=['empathy'])
+        data_train = data_train.rename(columns={"empathy_red": "empathy"})
+
+        print(data_train.head())
+
+
+
         print(f'Features from the training database')
         print(data_train.columns)
         print(f'Number of datapoints in training database: {len(data_train)}')
@@ -171,26 +189,17 @@ for control_vector in control_vector_list:
     #read test dataframe
     data_test = pd.read_csv(testFile)
     
-    #get rid of dominance
-    data_train = data_train.drop(columns=['dominance_speaker'])
-    data_train = data_train.drop(columns=['dominance_listener'])
-    #empathy to binary
-    #data_train['empathy_red'] = data_train.apply(lambda x: 2 if (x['empathy'] == 3 or x['empathy'] == 2)  else 1, axis = 1)
-    #data_train = data_train.drop(columns=['empathy'])
-    #data_train = data_train.rename(columns={"empathy_red": "empathy"})
 
-    data_train = data_train.drop(columns=['predictions_EX'])
-    data_train = data_train.drop(columns=['predictions_IP'])
-    #data_train = data_train.drop(columns=['predictions_ER'])
-    
-    #get rid of dominance
+    #modify features last minute    
     data_test = data_test.drop(columns=['dominance_speaker'])
     data_test = data_test.drop(columns=['dominance_listener'])
-    
-    #empathy to binary
-    #data_test['empathy_red'] = data_test.apply(lambda x: 2 if (x['empathy'] == 3 or x['empathy'] == 2)  else 1, axis = 1)
-    #data_test = data_test.drop(columns=['empathy'])
-    #data_test = data_test.rename(columns={"empathy_red": "empathy"})
+    data_test = data_test.drop(columns=['predictions_EX'])
+    data_test = data_test.drop(columns=['predictions_IP']) 
+
+    data_test['empathy_red'] = data_test.apply(lambda x: 1 if (x['empathy'] == 2 or x['empathy'] == 1)  else 2, axis = 1)
+    data_test = data_test.drop(columns=['empathy'])
+    data_test = data_test.rename(columns={"empathy_red": "empathy"})
+
 
 
     #Print features of the dataframe used for testing

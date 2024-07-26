@@ -1,0 +1,9 @@
+,0,1,2,3,4,5,6,7
+0,"('sadness', 'low')","('surprise', 'high')","('fear', 'high')","('anger', 'high')","('anticipation', 'low')","('disgust', 'medium')","('joy', 'low')","('trust', 'low')"
+1,"('joy', 'high')","('trust', 'low')","('disgust', 'high')","('anticipation', 'medium')","('anger', 'high')","('fear', 'low')","('sadness', 'high')","('surprise', 'medium')"
+2,"('surprise', 'medium')","('sadness', 'high')","('anticipation', 'medium')","('disgust', 'low')","('fear', 'high')","('anger', 'low')","('trust', 'high')","('joy', 'low')"
+3,"('trust', 'high')","('joy', 'high')","('anger', 'high')","('fear', 'medium')","('disgust', 'medium')","('anticipation', 'high')","('surprise', 'low')","('sadness', 'low')"
+4,"('anger', 'low')","('disgust', 'medium')","('trust', 'medium')","('sadness', 'medium')","('joy', 'high')","('surprise', 'medium')","('anticipation', 'low')","('fear', 'medium')"
+5,"('anticipation', 'low')","('fear', 'high')","('surprise', 'medium')","('joy', 'high')","('sadness', 'high')","('trust', 'low')","('anger', 'medium')","('disgust', 'high')"
+6,"('disgust', 'high')","('anger', 'high')","('joy', 'low')","('surprise', 'high')","('trust', 'high')","('sadness', 'high')","('fear', 'high')","('anticipation', 'high')"
+7,"('fear', 'high')","('anticipation', 'high')","('sadness', 'medium')","('trust', 'medium')","('surprise', 'medium')","('joy', 'low')","('disgust', 'high')","('anger', 'high')"
