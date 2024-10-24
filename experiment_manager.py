@@ -28,7 +28,7 @@ database_dir_ec = '/processed_databases/EmpatheticConversationsExchangeFormat/'
 database_dir_ex = '/processed_databases/EmpatheticExchanges/'
 
 #Experiment parameters
-experiment_number = 113
+experiment_number = 114
 #whether to do training or use an already trained model
 do_training = 1
 #choose training database
@@ -36,7 +36,7 @@ train_database_dir = database_dir_ex
 #choose testing database
 test_database_dir = database_dir_ex
 #already trained model
-already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(88) + '/' + 'trained_pbc4cip.sav'
+already_trained_model_path = current_dir + '/Experiments/outputs/Experiment '+ str(113) + '/' + 'trained_pbc4cip.sav'
 #whether to reprocess the database
 reprocess_database = 1
 #automated processing flag 
@@ -48,12 +48,12 @@ database_control_vector = [ 1,#database to classify 0 = empatheticconversations 
                             1,#epitome
                             1,#vad lexicon
                             1,#length
-                            0,#emotion 32
+                            1,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
                             1,#emotion mimicry
-                            0,#reduced empathy labels
-                            0, #exchange number
+                            1,#reduced empathy labels
+                            1, #exchange number
                             1, #output processed database
                             0 #7 emotion labels
                             ]
@@ -162,18 +162,16 @@ for control_vector in control_vector_list:
 
 
         #modify features last minute
-        data_train = data_train.drop(columns=['dominance_speaker'])
-        data_train = data_train.drop(columns=['dominance_listener'])
-        data_train = data_train.drop(columns=['predictions_EX'])
-        data_train = data_train.drop(columns=['predictions_IP'])
+        #data_train = data_train.drop(columns=['dominance_speaker'])
+        #data_train = data_train.drop(columns=['dominance_listener'])
+        #data_train = data_train.drop(columns=['predictions_EX'])
+        #data_train = data_train.drop(columns=['predictions_IP'])
 
 
 
-        data_train['empathy_red'] = data_train.apply(lambda x: 1 if (x['empathy'] == 2 or x['empathy'] == 1)  else 2, axis = 1)
-        data_train = data_train.drop(columns=['empathy'])
-        data_train = data_train.rename(columns={"empathy_red": "empathy"})
-
-        print(data_train.head())
+        #data_train['empathy_red'] = data_train.apply(lambda x: 1 if (x['empathy'] == 2 or x['empathy'] == 1)  else 2, axis = 1)
+        #data_train = data_train.drop(columns=['empathy'])
+        #data_train = data_train.rename(columns={"empathy_red": "empathy"})
 
 
 
@@ -191,14 +189,14 @@ for control_vector in control_vector_list:
     
 
     #modify features last minute    
-    data_test = data_test.drop(columns=['dominance_speaker'])
-    data_test = data_test.drop(columns=['dominance_listener'])
-    data_test = data_test.drop(columns=['predictions_EX'])
-    data_test = data_test.drop(columns=['predictions_IP']) 
+    #data_test = data_test.drop(columns=['dominance_speaker'])
+    #data_test = data_test.drop(columns=['dominance_listener'])
+    #data_test = data_test.drop(columns=['predictions_EX'])
+    #data_test = data_test.drop(columns=['predictions_IP']) 
 
-    data_test['empathy_red'] = data_test.apply(lambda x: 1 if (x['empathy'] == 2 or x['empathy'] == 1)  else 2, axis = 1)
-    data_test = data_test.drop(columns=['empathy'])
-    data_test = data_test.rename(columns={"empathy_red": "empathy"})
+    #data_test['empathy_red'] = data_test.apply(lambda x: 1 if (x['empathy'] == 2 or x['empathy'] == 1)  else 2, axis = 1)
+    #data_test = data_test.drop(columns=['empathy'])
+    #data_test = data_test.rename(columns={"empathy_red": "empathy"})
 
 
 
