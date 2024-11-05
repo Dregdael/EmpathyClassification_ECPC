@@ -43,15 +43,15 @@ reprocess_database = 1
 auto_experiments = 0
 #control vector for database processing
 database_control_vector = [ 1,#database to classify 0 = empatheticconversations (old), 1 empatheticexchanges (new), selected automatically when reprocess_database flag is active (1)
-                            1,#intent
-                            1,#sentiment
-                            1,#epitome
-                            1,#vad lexicon
+                            0,#intent
+                            0,#sentiment
+                            0,#epitome
+                            0,#vad lexicon
                             1,#length
-                            1,#emotion 32
+                            0,#emotion 32
                             0,#emotion 20
                             0,#emotion 8
-                            1,#emotion mimicry
+                            0,#emotion mimicry
                             1,#reduced empathy labels
                             1, #exchange number
                             1, #output processed database
